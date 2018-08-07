@@ -1,2 +1,5 @@
 .RData
 *.Rout
+.Rproj.user
+*.Rproj
+.Rhistory
