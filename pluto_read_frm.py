@@ -12,11 +12,15 @@ def pluto_vtk_to_numpy(filename, quantity_names, ordering):
     (only for scalar output of quantities)\
     and converts it to numpy array.\
     "ordering may be either "C" or "F"'''
-    reader = vtkRectilinearGridReader()
-    reader.SetFileName(filename)
-    reader.ReadAllVectorsOn()
-    reader.ReadAllScalarsOn()
-    reader.Update()
+
+    if (os.path.isfile(filename)):
+        reader = vtkRectilinearGridReader()
+        reader.SetFileName(filename)
+        reader.ReadAllVectorsOn()
+        reader.ReadAllScalarsOn()
+        reader.Update()
+    else:
+        raise ValueError("File '"+filename+"' does not exist")
 
     data = reader.GetOutput()
 
@@ -32,13 +36,7 @@ def pluto_vtk_to_numpy(filename, quantity_names, ordering):
     u = []
     for qn in quantity_names:
         # I transform to numpy array the scalar/vector field (and reshape)
-        print("qn:",qn)
         u.append(VN.vtk_to_numpy(data.GetCellData().GetArray(qn)))
-        # # f = VN.vtk_to_numpy(data.GetField())
-        # VN.vtk_to_numpy(data.GetPointData().GetArray(quantity_name))
-    # field = data.GetFieldData()
-    # time = VN.vtk_to_numpy(field.GetAbstractArray("time"))
-    # current = VN.vtk_to_numpy(field.GetAbstractArray("current"))
 
     # Number of cells per each dimension
     dim_cells = list(np.array(dim)-1)
@@ -57,7 +55,7 @@ def pluto_read_vtk_frame(pluto_dir, nframe=None, time=None, q_names=None):
     Returns a dictionary with the quantities, ND arrays of x,y,z positions and an int or a float
     containig the actual time and number of frame'''
 
-    vtklog_fi = os.path.join(pluto_dir,"out","vtk.out")
+    vtklog_fi = os.path.join(pluto_dir,"vtk.out")
     nvtk, t_log, dt, nsteps, file_type, endianess, quantity_names = read_vtk_log(vtklog_fi)
 
     if nframe!=None and time==None:
@@ -87,7 +85,7 @@ def pluto_read_vtk_frame(pluto_dir, nframe=None, time=None, q_names=None):
     vtk_basename = "data."
     ordering = "F"
     vtk_finame = vtk_basename + '{:04d}.vtk'.format(pluto_nframe)
-    vtk_fi = os.path.join(pluto_dir,"out",vtk_finame)
+    vtk_fi = os.path.join(pluto_dir,vtk_finame)
 
     # Read
     u, x, y, z = pluto_vtk_to_numpy(vtk_fi, q_names, ordering)
