@@ -48,6 +48,7 @@ def pluto_vtk_to_numpy(filename, quantity_names, ordering):
     u = []
     for qn in quantity_names:
         # I transform to numpy array the scalar/vector field (and reshape)
+        print("qn:",qn)
         u.append(VN.vtk_to_numpy(data.GetCellData().GetArray(qn)))
         # # f = VN.vtk_to_numpy(data.GetField())
         # VN.vtk_to_numpy(data.GetPointData().GetArray(quantity_name))
@@ -67,25 +68,36 @@ def pluto_vtk_to_numpy(filename, quantity_names, ordering):
 
     return u, x, y, z
 
-def pluto_read_vtk_frame(pluto_dir, n=None, t=None, q_names=None):
+def pluto_read_vtk_frame(pluto_dir, nframe=None, time=None, q_names=None):
     '''Reads a vtk dataframe which was written by pluto 4.2, only in non-vector mode.
     Returns a dictionary with the quantities, ND arrays of x,y,z positions and an int or a float
     containig the actual time and number of frame'''
 
-    # if n!=None and t==None:
-    #     pluto_nframe = n
-    #     pluto_time = leggi il tempo del frame n
-    # elif n==None and t!=None:
-    #     trovare l'n che più si avvicina a t
-    #     pluto_nframe = qualcosa
-    #     pluto_time
-    # else
-    #     raise ValueError("Epecify either n or t, not both or none.")
+    vtklog_fi = os.path.join(pluto_dir,"out","vtk.out")
+    nvtk, t_log, dt, nsteps, file_type, endianess, quantity_names = read_vtk_log(vtklog_fi)
+
+    if nframe!=None and time==None:
+        pluto_nframe = nframe
+        idx = np.where(nvtk==nframe)[0]
+        # Maybe this check is useless??
+        if idx[0].size==0:
+            raise ValueError("Frame {} not found!".format(nframe))
+        if len(idx)>1:
+            print("More than one line in vtk.out for dump number {:d}".format(nframe))
+            print("I use the last one (i.e.: the line more down in the file)!")
+        idx = idx[-1]
+        pluto_time = t_log[idx]
+    elif nframe==None and time!=None:
+        idx = np.argmin(np.abs(t_log-time))
+        pluto_nframe = nvtk[idx]
+        pluto_time = t_log[idx]
+    else:
+        raise ValueError("Specify either nframe or time, not both or none.")
 
     # Names of the quantities (if not feeded as input)
     if q_names==None:
-        q_names = ("rho","prs","vx1","vx2","ne","knor","ioniz","interBound",
-                   "etax1", "c2p_fail", "bx3", "T", "Jz", "Jr")
+        # Use the names given by the log file (out/vtk.out)
+        q_names = quantity_names[idx]
 
     # Path of the file to read
     vtk_basename = "data."
@@ -100,10 +112,10 @@ def pluto_read_vtk_frame(pluto_dir, n=None, t=None, q_names=None):
 
     return q, x, y, z, pluto_time, pluto_nframe
 
-def read_vtk_log(log_fi):
+def read_vtk_log(vtklog_fi):
     '''Function to read pluto's vtk log files (vtk.out)'''
 
-    with open(log_fi) as log:
+    with open(vtklog_fi) as log:
         lines = log.readlines()
 
     nvtk = []; t = []; dt = []; nsteps = []
