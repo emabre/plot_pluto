@@ -25,25 +25,9 @@ def pluto_vtk_to_numpy(filename, quantity_names, ordering):
         if ii > 1:
             dim.append(ii)
 
-    # print('dim={}'.format(dim))
-
-    # I transform to numpy array the domain (and reshape)
-    x = np.zeros(data.GetNumberOfPoints())
-    y = np.zeros(data.GetNumberOfPoints())
-    z = np.zeros(data.GetNumberOfPoints())
-
-    # Even though the data in pluto's vtk are defined on cells rather than points,
-    # it is useful to have the points (which are the corners of the cells)
-    for ii in range(data.GetNumberOfPoints()):
-            x[ii], y[ii], z[ii] = data.GetPoint(ii)
-
-    # print('x points: {}'.format(len(x)))
-    # print('y points: {}'.format(len(y)))
-    # print('z points: {}'.format(len(z)))
-
-    x = x.reshape(dim, order=ordering).transpose()
-    y = y.reshape(dim, order=ordering).transpose()
-    z = z.reshape(dim, order=ordering).transpose()
+    x = VN.vtk_to_numpy(data.GetXCoordinates())
+    y = VN.vtk_to_numpy(data.GetYCoordinates())
+    z = VN.vtk_to_numpy(data.GetZCoordinates())
 
     u = []
     for qn in quantity_names:
