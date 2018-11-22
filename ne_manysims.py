@@ -18,9 +18,8 @@ all_sims = [
             ]
 legends = [
            'rho20',
-           'rho as EAAC2017'
            ]
-pluto_nframes = [90,110]
+pluto_nframes = [80,160, 197]
 # z position of z-const lines (in cm)
 z_lines = np.linspace(1e-9,1.8,15)
 # Capillary radius
@@ -28,13 +27,20 @@ r_cap = 0.5e-3
 # Capillary length, half of the real one
 l_cap = 1.5e-2
 
-show_legend = False
+show_legend = True
 
 # <codecell>
 # Manipulate the input
 # If I set only one simulation, with more frames, than I see all the frames for the same simulation
+# "act" stands for "actual"
 if len(all_sims)==1 and len(pluto_nframes)>1:
-    all_sims_actual = all_sims*len(pluto_nframes)
+    all_sims_act = all_sims*len(pluto_nframes)
+    if len(legends)==1 and show_legend:
+        legends_act = legends*len(pluto_nframes)
+    elif len(legends)!=len(pluto_nframes) and show_legend:
+        raise ValueError('legends should be either in same amount as pluto_nframes or as sims_all, or set show_legend=False')
+    else:
+        legends_act = legends.copy()
 
 # Load the data
 ne_sims = []
@@ -42,12 +48,14 @@ ne_avg_sims = []
 r_sims = []
 z_sims = []
 cap = []
-for ii in range(len(all_sims_actual)):
-    pluto_dir = os.path.join(os.path.expandvars(all_sims_actual[ii]),'out')
+times = []
+for ii in range(len(all_sims_act)):
+    pluto_dir = os.path.join(os.path.expandvars(all_sims_act[ii]),'out')
     q, r, z, theta, t, n = prf.pluto_read_vtk_frame(pluto_dir,
                                                 # time=125.0,
                                                 nframe=pluto_nframes[ii]
                                                 )
+    times.append(t)
     # Convert r and z to cm
     r /= 1e3
     z /= 1e3
@@ -82,13 +90,13 @@ for ii in range(len(all_sims_actual)):
 # Plots
 # Average ne on fixed z positions
 fig_avg, ax_avg = plt.subplots()
-for ii in range(len(all_sims_actual)):
-    ax_avg.plot(z_lines, ne_avg_sims[ii], '.-', label=legends[ii])
+for ii in range(len(all_sims_act)):
+    ax_avg.plot(z_lines, ne_avg_sims[ii], '.-', label=legends_act[ii]+',t={}'.format(times[ii]))
 if show_legend:
     ax_avg.legend()
 
 # Colored map of ne per each simulation
-for ii in range(len(all_sims_actual)):
+for ii in range(len(all_sims_act)):
     fig_ne, ax_ne = plt.subplots()
     ne_map = ax_ne.pcolormesh(z_sims[ii], r_sims[ii], ne_sims[ii].transpose())
     for line in z_lines:
@@ -97,5 +105,5 @@ for ii in range(len(all_sims_actual)):
     cap_map = ax_ne.pcolormesh(z_sims[ii], r_sims[ii],
                                capwall.transpose(),
                                cmap='Greys_r')
-    ax_ne.set_title(legends[ii])
+    ax_ne.set_title(legends_act[ii]+',t={}'.format(times[ii]))
     fig_ne.colorbar(ne_map)
