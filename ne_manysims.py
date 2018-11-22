@@ -9,15 +9,18 @@ importlib.reload(prf)
 
 # <codecell>
 # Options
+# all_sims = [
+#             '/home/ema/simulazioni/sims_pluto/I90/newtransp-rho20',
+#             '/home/ema/simulazioni/sims_pluto/I90/asEAAC2017_r22/'
+#             ]
 all_sims = [
             '/home/ema/simulazioni/sims_pluto/I90/newtransp-rho20',
-            '/home/ema/simulazioni/sims_pluto/I90/asEAAC2017_r22/'
             ]
 legends = [
            'rho20',
            'rho as EAAC2017'
            ]
-pluto_nframes = [110,110]
+pluto_nframes = [90,110]
 # z position of z-const lines (in cm)
 z_lines = np.linspace(1e-9,1.8,15)
 # Capillary radius
@@ -25,17 +28,22 @@ r_cap = 0.5e-3
 # Capillary length, half of the real one
 l_cap = 1.5e-2
 
-show_legend = True
+show_legend = False
 
 # <codecell>
+# Manipulate the input
+# If I set only one simulation, with more frames, than I see all the frames for the same simulation
+if len(all_sims)==1 and len(pluto_nframes)>1:
+    all_sims_actual = all_sims*len(pluto_nframes)
+
 # Load the data
 ne_sims = []
 ne_avg_sims = []
 r_sims = []
 z_sims = []
 cap = []
-for ii in range(len(all_sims)):
-    pluto_dir = os.path.join(os.path.expandvars(all_sims[ii]),'out')
+for ii in range(len(all_sims_actual)):
+    pluto_dir = os.path.join(os.path.expandvars(all_sims_actual[ii]),'out')
     q, r, z, theta, t, n = prf.pluto_read_vtk_frame(pluto_dir,
                                                 # time=125.0,
                                                 nframe=pluto_nframes[ii]
@@ -74,13 +82,13 @@ for ii in range(len(all_sims)):
 # Plots
 # Average ne on fixed z positions
 fig_avg, ax_avg = plt.subplots()
-for ii in range(len(all_sims)):
+for ii in range(len(all_sims_actual)):
     ax_avg.plot(z_lines, ne_avg_sims[ii], '.-', label=legends[ii])
 if show_legend:
     ax_avg.legend()
 
 # Colored map of ne per each simulation
-for ii in range(len(all_sims)):
+for ii in range(len(all_sims_actual)):
     fig_ne, ax_ne = plt.subplots()
     ne_map = ax_ne.pcolormesh(z_sims[ii], r_sims[ii], ne_sims[ii].transpose())
     for line in z_lines:
