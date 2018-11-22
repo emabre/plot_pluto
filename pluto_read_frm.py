@@ -62,8 +62,9 @@ def pluto_read_vtk_frame(pluto_dir, nframe=None, time=None, q_names=None):
         pluto_nframe = nframe
         idx = np.where(nvtk==nframe)[0]
         # Maybe this check is useless??
-        if idx[0].size==0:
-            raise ValueError("Frame {} not found!".format(nframe))
+        # print(type(idx))
+        if idx.size==0:
+            raise ValueError("Frame {} not found in directory".format(nframe)+" "+pluto_dir)
         if len(idx)>1:
             print("More than one line in vtk.out for dump number {:d}".format(nframe))
             print("I use the last one (i.e.: the line more down in the file)!")

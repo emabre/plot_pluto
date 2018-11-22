@@ -14,12 +14,23 @@ importlib.reload(prf)
 #             '/home/ema/simulazioni/sims_pluto/I90/asEAAC2017_r22/'
 #             ]
 all_sims = [
-            '/home/ema/simulazioni/sims_pluto/I90/newtransp-rho20',
+            '$TORRE/home/konrad/simulazioni/sims_pluto/I90/newtransp',
+            '$TORRE/home/konrad/simulazioni/sims_pluto/I90/newtransp-rho5',
+            '$TORRE/home/konrad/simulazioni/sims_pluto/I90/newtransp-rho10',
+            '$TORRE/home/konrad/simulazioni/sims_pluto/I90/newtransp-rho20',
+            '$TORRE/home/konrad/simulazioni/sims_pluto/I90/asEAAC2017_r22'
             ]
+# all_sims = [
+#             '/home/ema/simulazioni/sims_pluto/I90/newtransp-rho20',
+#             ]
 legends = [
-           'rho20',
+           '2.5e-7 g/cm3',
+           '5e-7 g/cm3',
+           '1e-6 g/cm3',
+           '2e-6 g/cm3',
+           '2.5e-6 g/cm3'
            ]
-pluto_nframes = [80,160, 197]
+pluto_nframes = [80]*5
 # z position of z-const lines (in cm)
 z_lines = np.linspace(1e-9,1.8,15)
 # Capillary radius
@@ -40,7 +51,10 @@ if len(all_sims)==1 and len(pluto_nframes)>1:
     elif len(legends)!=len(pluto_nframes) and show_legend:
         raise ValueError('legends should be either in same amount as pluto_nframes or as sims_all, or set show_legend=False')
     else:
-        legends_act = legends.copy()
+        legends_act = legends
+else:
+    all_sims_act = all_sims
+    legends_act = legends
 
 # Load the data
 ne_sims = []
@@ -52,9 +66,8 @@ times = []
 for ii in range(len(all_sims_act)):
     pluto_dir = os.path.join(os.path.expandvars(all_sims_act[ii]),'out')
     q, r, z, theta, t, n = prf.pluto_read_vtk_frame(pluto_dir,
-                                                # time=125.0,
-                                                nframe=pluto_nframes[ii]
-                                                )
+                                                    # time=125.0,
+                                                    nframe=pluto_nframes[ii])
     times.append(t)
     # Convert r and z to cm
     r /= 1e3
@@ -81,8 +94,8 @@ for ii in range(len(all_sims_act)):
         area_r = np.sum(np.pi * (r[1:]**2 - r[:-1]**2) * cap[ii][idx_z,:])
         areas.append(area_r)
         ne_avg_r.append(integ/area_r)
-        print("area_r={}".format(area_r))
-        print("integ={}".format(integ))
+        # print("area_r={}".format(area_r))
+        # print("integ={}".format(integ))
 
     ne_avg_sims.append(np.array(ne_avg_r))
 
@@ -92,6 +105,7 @@ for ii in range(len(all_sims_act)):
 fig_avg, ax_avg = plt.subplots()
 for ii in range(len(all_sims_act)):
     ax_avg.plot(z_lines, ne_avg_sims[ii], '.-', label=legends_act[ii]+',t={}'.format(times[ii]))
+    ax_avg.grid()
 if show_legend:
     ax_avg.legend()
 
