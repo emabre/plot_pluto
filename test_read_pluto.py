@@ -2,9 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import importlib
 import os
+import capillary_utils as cu
 import pluto_read_frm as prf
 
 importlib.reload(prf)
+importlib.reload(cu)
+
 plt.close("all")
 
 # <codecell>
