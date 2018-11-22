@@ -25,6 +25,8 @@ r_cap = 0.5e-3
 # Capillary length, half of the real one
 l_cap = 1.5e-2
 
+show_legend = True
+
 # <codecell>
 # Load the data
 ne_sims = []
@@ -59,10 +61,12 @@ for ii in range(len(all_sims)):
         # print("z[idx_z]={};\tz_line={};\tz[idx_z+1]={}".format(z[idx_z],
         #                                                      z_lines[jj],
         #                                                      z[idx_z+1]))
-        integ = np.sum(np.pi * q["ne"][idx_z,:] * (r[1:]**2 - r[:-1]**2) * cap)
-        area_r = np.sum(np.pi * (r[1:]**2 - r[:-1]**2) * cap)
+        integ = np.sum(np.pi * q["ne"][idx_z,:] * (r[1:]**2 - r[:-1]**2) * cap[ii][idx_z,:])
+        area_r = np.sum(np.pi * (r[1:]**2 - r[:-1]**2) * cap[ii][idx_z,:])
         areas.append(area_r)
         ne_avg_r.append(integ/area_r)
+        print("area_r={}".format(area_r))
+        print("integ={}".format(integ))
 
     ne_avg_sims.append(np.array(ne_avg_r))
 
@@ -72,7 +76,8 @@ for ii in range(len(all_sims)):
 fig_avg, ax_avg = plt.subplots()
 for ii in range(len(all_sims)):
     ax_avg.plot(z_lines, ne_avg_sims[ii], '.-', label=legends[ii])
-ax_avg.legend()
+if show_legend:
+    ax_avg.legend()
 
 # Colored map of ne per each simulation
 for ii in range(len(all_sims)):
