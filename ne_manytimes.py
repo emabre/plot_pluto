@@ -9,27 +9,21 @@ importlib.reload(prf)
 
 # <codecell>
 # Options
-# all_sims = [
-#             '/home/ema/simulazioni/sims_pluto/I90/newtransp-rho20',
-#             '/home/ema/simulazioni/sims_pluto/I90/asEAAC2017_r22/'
-#             ]
-all_sims = [
-            '$TORRE/home/konrad/simulazioni/sims_pluto/dens_real/1e4Pa-06012019-DR',
-            '$TORRE/home/konrad/simulazioni/sims_pluto/dens_real/1e5Pa'
-            ]
-# all_sims = [
-#             '/home/ema/simulazioni/sims_pluto/I90/newtransp-rho20',
-#             ]
-legends = [
-           '1e4Pa',
-           '1e5Pa',
-           ]
+sim = '/home/ema/simulazioni/sims_pluto/dens_real/1e5Pa'
+#sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa'
+
+legend = '1e5Pa'
+#legend = '1.3e5Pa'
+
 # The frames of pluto which I want to see (it must be a list of integers, with
 # dimension : len(all_sims)*(number of frames you want to watch in every simulation))
 # fastest varying index: frames for the same simulation, slower running index: simulation
-pluto_nframes = [80]*len(all_sims)
+pluto_nframes = [80, 160, 200]
+#pluto_nframes = [80]
 # z position of z-const lines (in cm)
-z_lines = np.linspace(1e-9,1.8,60)
+# Z lines settings, z lines always start from 0
+N_z_lines = 60
+z_lines_end = 1.8
 # Capillary radius
 r_cap = 0.5e-3
 # Capillary length, half of the real one
@@ -37,21 +31,13 @@ l_cap = 1.5e-2
 
 show_legend = True
 
+reflect_lowz = True
+zlim_plot = 0.75
+
 # <codecell>
 # Manipulate the input
-# If I set only one simulation, with more frames, than I see all the frames for the same simulation
-# "act" stands for "actual"
-if len(all_sims)==1 and len(pluto_nframes)>1:
-    all_sims_act = all_sims*len(pluto_nframes)
-    if len(legends)==1 and show_legend:
-        legends_act = legends*len(pluto_nframes)
-    elif len(legends)!=len(pluto_nframes) and show_legend:
-        raise ValueError('legends should be either in same amount as pluto_nframes or as sims_all, or set show_legend=False')
-    else:
-        legends_act = legends
-else:
-    all_sims_act = all_sims
-    legends_act = legends
+
+z_lines = np.linspace(1e-12,z_lines_end,N_z_lines)
 
 # Load the data
 ne_sims = []
@@ -60,8 +46,8 @@ r_sims = []
 z_sims = []
 cap = []
 times = []
-for ii in range(len(all_sims_act)):
-    pluto_dir = os.path.join(os.path.expandvars(all_sims_act[ii]),'out')
+for ii in range(len(pluto_nframes)):
+    pluto_dir = os.path.join(os.path.expandvars(sim),'out')
     q, r, z, theta, t, n = prf.pluto_read_vtk_frame(pluto_dir,
                                                     # time=125.0,
                                                     nframe=pluto_nframes[ii])
@@ -72,11 +58,11 @@ for ii in range(len(all_sims_act)):
     r_sims.append(r)
     z_sims.append(z)
     ne_sims.append(q["ne"])
-
+    
     # Build capillary shape (False where there is wall, True elsewere)
     # u_cap = cap_shape(r, z, r_cap, l_cap)
     cap.append(q['interBound']==0e0)
-
+    
     ne_avg_r = []
     areas = []
     for jj in range(len(z_lines)):
@@ -93,21 +79,36 @@ for ii in range(len(all_sims_act)):
         ne_avg_r.append(integ/area_r)
         # print("area_r={}".format(area_r))
         # print("integ={}".format(integ))
-
+    
     ne_avg_sims.append(np.array(ne_avg_r))
+
+if reflect_lowz:
+    # Mayve the code would work even without flipping, but I do so, to make if more robust
+    z_lines = np.append(np.flip(-z_lines, axis=0), z_lines)
+    for ii in range(len(pluto_nframes)):
+        ne_avg_sims[ii] = np.append(np.flip(ne_avg_sims[ii], axis=0), ne_avg_sims[ii])
+
+#z_lines = z_lines+0.5
+#z_lines*=10
 
 # <codecell>
 # Plots
 # Average ne on fixed z positions
 fig_avg, ax_avg = plt.subplots()
-for ii in range(len(all_sims_act)):
-    ax_avg.plot(z_lines, ne_avg_sims[ii], '.-', label=legends_act[ii]+',t={}'.format(times[ii]))
+
+for ii in range(len(pluto_nframes)):
+    ax_avg.plot(z_lines, ne_avg_sims[ii], '.-', label=legend+',t={}'.format(times[ii]))
     ax_avg.grid()
 if show_legend:
     ax_avg.legend()
+ax_avg.set_ylabel('$n_e / \mathrm{cm}^{-3}$ (transverse average)')
+ax_avg.set_xlabel('$z / \mathrm{cm}$')
+ax_avg.set_xlim([-zlim_plot, zlim_plot])
+#ax_avg.set_xlim([0.0, 10.0])
+
 
 # Colored map of ne per each simulation
-for ii in range(len(all_sims_act)):
+for ii in range(len(pluto_nframes)):
     fig_ne, ax_ne = plt.subplots()
     ne_map = ax_ne.pcolormesh(z_sims[ii], r_sims[ii], ne_sims[ii].transpose())
     for line in z_lines:
@@ -116,5 +117,5 @@ for ii in range(len(all_sims_act)):
     cap_map = ax_ne.pcolormesh(z_sims[ii], r_sims[ii],
                                capwall.transpose(),
                                cmap='Greys_r')
-    ax_ne.set_title(legends_act[ii]+',t={}'.format(times[ii]))
+    ax_ne.set_title(legend+',t={}'.format(times[ii]))
     fig_ne.colorbar(ne_map)
