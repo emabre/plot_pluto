@@ -12,13 +12,16 @@ importlib.reload(prf)
 sim = '/home/ema/simulazioni/sims_pluto/dens_real/1e5Pa'
 #sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa'
 
-legend = '1e5Pa'
+legend = '1.e5Pa'
 #legend = '1.3e5Pa'
+
+plot_ne_map_each_frame = False
 
 # The frames of pluto which I want to see (it must be a list of integers, with
 # dimension : len(all_sims)*(number of frames you want to watch in every simulation))
 # fastest varying index: frames for the same simulation, slower running index: simulation
-pluto_nframes = [80, 160, 200]
+#pluto_nframes = [80, 160, 200]
+pluto_nframes = [20*ii for ii in range(14)]
 #pluto_nframes = [80]
 # z position of z-const lines (in cm)
 # Z lines settings, z lines always start from 0
@@ -107,15 +110,23 @@ ax_avg.set_xlim([-zlim_plot, zlim_plot])
 #ax_avg.set_xlim([0.0, 10.0])
 
 
-# Colored map of ne per each simulation
-for ii in range(len(pluto_nframes)):
-    fig_ne, ax_ne = plt.subplots()
-    ne_map = ax_ne.pcolormesh(z_sims[ii], r_sims[ii], ne_sims[ii].transpose())
-    for line in z_lines:
-        ax_ne.axvline(x=line, linestyle='--', color='r')
-    capwall = np.ma.masked_array(cap[ii], cap[ii])
-    cap_map = ax_ne.pcolormesh(z_sims[ii], r_sims[ii],
-                               capwall.transpose(),
-                               cmap='Greys_r')
-    ax_ne.set_title(legend+',t={}'.format(times[ii]))
-    fig_ne.colorbar(ne_map)
+if plot_ne_map_each_frame:
+    # Colored map of ne per each simulation frame
+    for ii in range(len(pluto_nframes)):
+        fig_ne, ax_ne = plt.subplots()
+        ne_map = ax_ne.pcolormesh(z_sims[ii], r_sims[ii], ne_sims[ii].transpose())
+        for line in z_lines:
+            ax_ne.axvline(x=line, linestyle='--', color='r')
+        capwall = np.ma.masked_array(cap[ii], cap[ii])
+        cap_map = ax_ne.pcolormesh(z_sims[ii], r_sims[ii],
+                                   capwall.transpose(),
+                                   cmap='Greys_r')
+        ax_ne.set_title(legend+',t={}'.format(times[ii]))
+        fig_ne.colorbar(ne_map)
+
+# Colored map of ne, where x is longitudinal coordinate and y is time
+# (like in Francesco's thesis)
+ne_zt = np.stack(ne_avg_sims, axis=1).transpose()
+fig_zt, ax_zt = plt.subplots()
+metti l'extent e forse anche origin='lower' (vedi https://matplotlib.org/gallery/images_contours_and_fields/image_demo.html#sphx-glr-gallery-images-contours-and-fields-image-demo-py)
+ax_zt.imshow(ne_zt, extent=)
