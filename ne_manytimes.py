@@ -4,7 +4,7 @@ import importlib
 import os
 import pluto_read_frm as prf
 
-plt.close("all")
+#plt.close("all")
 importlib.reload(prf)
 
 # <codecell>
@@ -21,12 +21,12 @@ plot_ne_map_each_frame = False
 # dimension : len(all_sims)*(number of frames you want to watch in every simulation))
 # fastest varying index: frames for the same simulation, slower running index: simulation
 #pluto_nframes = [80, 160, 200]
-pluto_nframes = [20*ii for ii in range(14)]
-#pluto_nframes = [80]
+pluto_nframes = [20*ii for ii in range(1,15)]
+# pluto_nframes = [80]
 # z position of z-const lines (in cm)
 # Z lines settings, z lines always start from 0
-N_z_lines = 60
-z_lines_end = 1.8
+N_z_lines = 30
+z_lines_end = 0.5
 # Capillary radius
 r_cap = 0.5e-3
 # Capillary length, half of the real one
@@ -40,7 +40,7 @@ zlim_plot = 0.75
 # <codecell>
 # Manipulate the input
 
-z_lines = np.linspace(1e-12,z_lines_end,N_z_lines)
+z_lines, dz = np.linspace(1e-12, z_lines_end, N_z_lines, retstep=True)
 
 # Load the data
 ne_sims = []
@@ -61,11 +61,11 @@ for ii in range(len(pluto_nframes)):
     r_sims.append(r)
     z_sims.append(z)
     ne_sims.append(q["ne"])
-    
+
     # Build capillary shape (False where there is wall, True elsewere)
     # u_cap = cap_shape(r, z, r_cap, l_cap)
     cap.append(q['interBound']==0e0)
-    
+
     ne_avg_r = []
     areas = []
     for jj in range(len(z_lines)):
@@ -82,7 +82,7 @@ for ii in range(len(pluto_nframes)):
         ne_avg_r.append(integ/area_r)
         # print("area_r={}".format(area_r))
         # print("integ={}".format(integ))
-    
+
     ne_avg_sims.append(np.array(ne_avg_r))
 
 if reflect_lowz:
@@ -128,5 +128,14 @@ if plot_ne_map_each_frame:
 # (like in Francesco's thesis)
 ne_zt = np.stack(ne_avg_sims, axis=1).transpose()
 fig_zt, ax_zt = plt.subplots()
-metti l'extent e forse anche origin='lower' (vedi https://matplotlib.org/gallery/images_contours_and_fields/image_demo.html#sphx-glr-gallery-images-contours-and-fields-image-demo-py)
-ax_zt.imshow(ne_zt, extent=)
+ne_map = ax_zt.imshow(ne_zt, origin='upper',
+                     extent=[z_lines[0]-dz*0.5, z_lines[-1]+dz*0.5,
+                             times[-1]+0.5*(times[-1]-times[-2]), times[0]-0.5*(times[1]-times[0])],  # extent=[left,right,bottom,top]
+                     aspect='auto',
+                     cmap='jet',
+                     vmax = 1.5e17
+                     )
+fig_zt.colorbar(ne_map)
+ax_zt.set_title(legend)
+plt.show()
+#ax_zt.set_aspect(1)
