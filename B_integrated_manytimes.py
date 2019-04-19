@@ -6,12 +6,14 @@ import pluto_read_frm as prf
 
 #plt.close("all")
 importlib.reload(prf)
-plt.ion()
+# plt.ion()
 
 # <codecell>
 # Options
 # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1e5Pa'
-sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa'
+# sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa'
+# sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-rhounif-I90-3.2cm'
+sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-1.2cm'
 
 # legend = '1.e5Pa'
 legend = '1.3e5Pa'
@@ -23,7 +25,8 @@ plot_ne_map_each_frame = False
 # fastest varying index: frames for the same simulation, slower running index: simulation
 # pluto_nframes = [80, 160, 200]
 # pluto_nframes = [-10+20*ii for ii in range(1,15)]
-pluto_nframes = [50, 74, 100, 120, 150, 190]
+# pluto_nframes = [24, 50, 74, 100, 120, 150]
+pluto_nframes = [24, 50, 74, 100, 120, 132, 150]
 # z position of z-const lines (in cm)
 # Z lines settings, z lines always start from 0
 N_z_lines = 30
