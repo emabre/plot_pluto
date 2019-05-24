@@ -6,12 +6,12 @@ import os
 import pluto_read_frm as prf
 from scipy.constants import mu_0
 import utilities as ut
-import k_Dk
+import active_plasma_lens as apl
 
 #plt.close("all")
 importlib.reload(prf)
 importlib.reload(ut)
-importlib.reload(k_Dk)
+importlib.reload(apl)
 # plt.ion()
 
 # <codecell>
@@ -50,7 +50,7 @@ zlim_plot = 0.5
 ne_lim_plot = 1.5e17
 
 #%% Compute/get k, Dk and I
-times, r_c, k, Dk = k_Dk.k_Dk_time_evol(sim, pluto_nframes, r_cap, l_cap)
+times, r_c, g, Dg = apl.g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap)
 t_I, I = ut.get_currtab(sim)
 
 # <codecell> Plots
