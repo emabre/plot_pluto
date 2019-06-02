@@ -20,20 +20,32 @@ importlib.reload(apl)
 
 # ----- Beam -----
 # Normalized emittance (m*rad)
-emitt_N = 1e-6
+emitt_N = 0.8e-6
 energy_MeV = 127
 me_MeV = 0.511
+
 # Sigma
 sigma_x = 110.e-6
+# NB: l'aumento di emitt cambia molto al variare di d_sigma_x
+#sigma_x = 100.e-6
+
 # Derivative of sigma w.r.t. z
 d_sigma_x = (113.-105.)/25.*1.e-4
+# NB: l'aumento di emitt cambia poco al variare di d_sigma_x (varia anche se decommento qualche riga qui sotto)
+#d_sigma_x -= d_sigma_x*0.5
+#d_sigma_x+-= d_sigma_x*0.5
+#d_sigma_x = 0.0
+
 # Number of particles
 Npart = 10000
 
 # ----- Simulation -----
-sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-1.2cm'
-pluto_nframes = [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300]  # list(range(321))
-l_cap = 3e-2  # m
+#sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-1.2cm'
+# sim = '/home/ema/simulazioni/sims_pluto/perTesi/600mbar-I235-3.2cmL-1mmD'
+sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-8-I235-3.2cmL-1mmD'
+pluto_nframes = list(range(0,301,10))
+#pluto_nframes = [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300]  # list(range(321))
+l_cap = 3.2e-2  # m
 r_cap = 0.5e-3  # m
 time_unit_pluto = 1e-9  # unit time in pluto's simulation (in s)
 
@@ -123,17 +135,23 @@ t, I = ut.get_currtab(sim)
 emitt_N_new = emitt_new*gamma
 
 #%% Plot
-plt.close('all')
+#plt.close('all')
 
 fig, ax = plt.subplots()
 
 ax.plot(t*1e9, I, '-', color='k', label='Current')
 ax_emitt = ax.twinx()
-ax_emitt.plot(times*1e9, emitt_N_new*1e6, '.-', color='b', label='Emitt.')
+ax_emitt.plot(times*1e9, emitt_N_new*1e6, 'o-', color='b', label='Emitt.')
 ax_emitt.axhline(y=emitt_N*1e6, linestyle='--', color='b', label='Emitt. no plasma')
 ax_emitt.set_ylabel('Emittance (mm mrad)')
 fig.legend()
 ax.set_xlabel('Time (ns)')
 ax.set_ylabel('Current (A)')
+title = os.path.basename(sim) + "\nσ={:.3g}μm, σ'={:.3g}, ε={:.3g} mm mrad".format(1e6*sigma_x,
+                                                                                     d_sigma_x,
+                                                                                     emitt_N)
+title += "\nl_cap={:.3g}cm, r_cap={:.3g}mm".format(1e2*l_cap,
+                                                 1e3*r_cap)
+ax.set_title(title)
 #ax.legend()
 plt.tight_layout()

@@ -5,7 +5,8 @@ import os
 
 # <codecell>
 # Settings
-sim = '$TORRE/home/konrad/simulazioni/sims_pluto/I90/newtransp'
+# sim = '$TORRE/home/konrad/simulazioni/sims_pluto/I90/newtransp'
+sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-8-I235-3.2cmL-1mmD'
 
 # <codecell>
 # Load data
