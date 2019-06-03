@@ -55,6 +55,10 @@ def pluto_read_vtk_frame(pluto_dir, nframe=None, time=None, q_names=None):
     Returns a dictionary with the quantities, ND arrays of x,y,z positions and an int or a float
     containig the actual time and number of frame'''
 
+    # Check if sim directory exists
+    if not(os.path.isdir(pluto_dir)):
+        raise ValueError(pluto_dir + ' is not a valid directory')
+
     vtklog_fi = os.path.join(pluto_dir,"vtk.out")
     nvtk, t_log, dt, nsteps, file_type, endianess, quantity_names = read_vtk_log(vtklog_fi)
 

@@ -17,7 +17,7 @@ def emittance(x, xp):
 
 #
 #def emittance_growth_thin_lens(x, xp, k):
-#    
+#
 #    # Generate particle distribution
 
 def g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap):
@@ -86,3 +86,54 @@ def g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap):
         Dg[:,ii] = g[0,ii] - g[:,ii]
 
     return times, r_c, g, Dg
+
+def ne_avg_over_r(sim, pluto_nframes, average_ne, z_lines=None):
+    '''
+    Compute max electron density over the transverse section (r direction).
+    return a vector of ne, the elements of ne correspond to different z positions
+    Input:
+        pluto_nframes : the frames of pluto which I want to see (it must be a list of integers)
+    Returns:
+        times, e
+    '''
+
+    times = []
+    ne_avg_r_sims = []
+    for ii in range(len(pluto_nframes)):
+        pluto_dir = os.path.join(os.path.expandvars(sim),'out')
+        # Load the data
+        q, r, z, theta, t, n = prf.pluto_read_vtk_frame(pluto_dir,
+                                                        # time=125.0,
+                                                        nframe=pluto_nframes[ii])
+        times.append(t)
+        # Convert r and z to cm
+        r /= 1e3
+        z /= 1e3
+        ne_avg_r = []
+        # If z_lines have not been provided, I take all z cell centers
+        if z_lines is None:
+            # idx_z_all = list(range(len(z)-1))  # I reduce by 1, since z are the cell borders, not the centers
+            z_lines = 0.5*(z[1:]+z[:-1])
+        for z_line in z_lines:
+            # Check that z-lines are inside the grid
+            if z_line>z.max() or z_line<z.min():
+                raise ValueError('z_lines outside z grid')
+            # I find the grid cell where z_line is included,
+            # note that ne is defined inside the cell (it's an average value)
+            # so I may imagine that it is constant inside the cell
+            idx_z = np.argmax(z[z<=z_line])
+            if average_ne == 'integral':
+                # Build capillary shape (False where there is wall, True elsewere)
+                cap = (q['interBound']==0e0)
+                areas = []
+                integ = np.sum(np.pi * q["ne"][idx_z,:] * (r[1:]**2 - r[:-1]**2) * cap[idx_z,:])
+                area_r = np.sum(np.pi * (r[1:]**2 - r[:-1]**2) * cap[idx_z,:])
+                areas.append(area_r)
+                ne_avg_r.append(integ/area_r)
+            elif average_ne == 'max':
+                ne_avg_r.append(q["ne"][idx_z,:].max())
+            else:
+                raise ValueError('Wrong choice for average_ne')
+        ne_avg_r_sims.append(ne_avg_r)
+
+    return z_lines, ne_avg_r_sims, times
