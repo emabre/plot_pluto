@@ -62,6 +62,8 @@ for ff in range(len(pluto_nframes)):
             label = os.path.basename(sim[ss][:-1])
         ax[ff].plot(z, ne_avg_r[ss][ff], label=label)
     ax[ff].set_title('t = {} ns'.format(times[ff]))
+    ax[ff].set_ylabel('ne (cm^-3)')
+ax[-1].set_xlabel('z (cm)')
 ax[0].legend()
-
+plt.tight_layout()
 plt.show()

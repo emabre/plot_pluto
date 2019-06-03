@@ -11,17 +11,19 @@ importlib.reload(prf)
 # Options
 # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa'
 # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-1.2cm'
-sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-rhounif-I90-3cm'
+# sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-rhounif-I90-3cm'
 # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-rhounif'
 # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa'
 # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1e4Pa-06012019'
+# sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
+sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I90-3.2cmL-1mmD'
 
 # legend = '1.e5Pa'
 legend = os.path.split(sim)[1]
 # legend = '1.3e5Pa-rhounif'
 
 # How to transversely average ne: 'max' (max value), 'integral' (integral average)
-average_ne = 'integral'
+average_ne = 'max'
 
 plot_ne_map_each_frame = False
 
@@ -29,7 +31,8 @@ plot_ne_map_each_frame = False
 # dimension : len(all_sims)*(number of frames you want to watch in every simulation))
 # fastest varying index: frames for the same simulation, slower running index: simulation
 #pluto_nframes = [80, 160, 200]
-pluto_nframes = [20*ii for ii in range(1,15)]
+# pluto_nframes = [20*ii for ii in range(1,15)]
+time = [200.,300.,400.,500.,600.,700.,800.,]
 # pluto_nframes = [80]
 # z position of z-const lines (in cm)
 # Z lines settings, z lines always start from 0
@@ -53,11 +56,16 @@ r_sims = []
 z_sims = []
 cap = []
 times = []
-for ii in range(len(pluto_nframes)):
+try:
+    Nframes = len(pluto_nframes)
+except NameError:
+    Nframes = len(time)
+for ii in range(Nframes):
     pluto_dir = os.path.join(os.path.expandvars(sim),'out')
     q, r, z, theta, t, n = prf.pluto_read_vtk_frame(pluto_dir,
-                                                    # time=125.0,
-                                                    nframe=pluto_nframes[ii])
+                                                    time = time[ii],
+                                                    # nframe = pluto_nframes[ii],
+                                                    )
     times.append(t)
     # Convert r and z to cm
     r /= 1e3
@@ -97,7 +105,7 @@ for ii in range(len(pluto_nframes)):
 if reflect_lowz:
     # Mayve the code would work even without flipping, but I do so, to make if more robust
     z_lines = np.append(np.flip(-z_lines, axis=0), z_lines)
-    for ii in range(len(pluto_nframes)):
+    for ii in range(Nframes):
         ne_avg_sims[ii] = np.append(np.flip(ne_avg_sims[ii], axis=0), ne_avg_sims[ii])
 
 #z_lines = z_lines+0.5
@@ -108,7 +116,7 @@ if reflect_lowz:
 # Average ne on fixed z positions
 fig_avg, ax_avg = plt.subplots()
 
-for ii in range(len(pluto_nframes)):
+for ii in range(Nframes):
     ax_avg.plot(z_lines, ne_avg_sims[ii], '.-', label=legend+',t={}'.format(times[ii]))
     ax_avg.grid()
 if show_legend:
@@ -118,10 +126,9 @@ ax_avg.set_xlabel('$z / \mathrm{cm}$')
 ax_avg.set_xlim([-zlim_plot, zlim_plot])
 #ax_avg.set_xlim([0.0, 10.0])
 
-
 if plot_ne_map_each_frame:
     # Colored map of ne per each simulation frame
-    for ii in range(len(pluto_nframes)):
+    for ii in range(Nframes):
         fig_ne, ax_ne = plt.subplots()
         ne_map = ax_ne.pcolormesh(z_sims[ii], r_sims[ii], ne_sims[ii].transpose())
         for line in z_lines:
@@ -138,11 +145,11 @@ if plot_ne_map_each_frame:
 ne_zt = np.stack(ne_avg_sims, axis=1).transpose()
 fig_zt, ax_zt = plt.subplots()
 ne_map = ax_zt.imshow(ne_zt, origin='upper',
-                     extent=[z_lines[0]-dz*0.5, z_lines[-1]+dz*0.5,
-                             times[-1]+0.5*(times[-1]-times[-2]), times[0]-0.5*(times[1]-times[0])],  # extent=[left,right,bottom,top]
-                     aspect='auto',
-                     cmap='jet',
-                     vmax = 1.5e17
+                      extent=[z_lines[0]-dz*0.5, z_lines[-1]+dz*0.5,
+                              times[-1]+0.5*(times[-1]-times[-2]), times[0]-0.5*(times[1]-times[0])],  # extent=[left,right,bottom,top]
+                      aspect='auto',
+                      cmap='jet',
+                      vmax = 1.5e17,
                      )
 fig_zt.colorbar(ne_map)
 ax_zt.set_title(legend + '\ntransv. avg: ' + average_ne)
