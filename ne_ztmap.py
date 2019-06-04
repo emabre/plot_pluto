@@ -59,6 +59,16 @@ if reflect_lowz:
 
 tt,zz = np.meshgrid(t,z)
 
+#%% Read picture
+import matplotlib.image as mpimg
+filippi = mpimg.imread('/home/ema/screenshots/filippi.png')
+fig, ax = plt.subplots()
+ax.imshow(filippi,
+          extent=[-1.5, 1.5,1250.,150.],  # extent=[left,right,bottom,top],
+          aspect='auto',
+          origin='upper'
+            )
+
 # <codecell> Plots
 fig, ax = plt.subplots()
 
