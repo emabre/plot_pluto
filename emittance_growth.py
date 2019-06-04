@@ -20,8 +20,8 @@ importlib.reload(apl)
 me_MeV = 0.511
 
 #%% Setting
-paper_emulate = 'Pompili2017'
-# paper_emulate = 'Ppmpili2018'
+# paper_emulate = 'Pompili2017'
+paper_emulate = 'Pompili2018'
 
 # #sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-1.2cm'
 # # sim = '/home/ema/simulazioni/sims_pluto/perTesi/600mbar-I235-3.2cmL-1mmD'
@@ -30,18 +30,22 @@ paper_emulate = 'Pompili2017'
 # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-8-I90-3.2cmL-1mmD'
 # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
 # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I90-3.2cmL-1mmD'
-sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-6-I90-3.2cmL-1mmD'
+# sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-6-I90-3.2cmL-1mmD'
+# sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I235-3.2cmL-1mmD-r60'
+sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I235-3.2cmL-1mmD'
 
-pluto_nframes = list(range(0,160,5))  # list(range(0,301,10))
+pluto_nframes = list(range(0,150,5))  # list(range(0,301,10))
 time_unit_pluto = 1e-9  # unit time in pluto's simulation (in s)
 
 # ----- Beam -----
 # Normalized emittance (m*rad)
 if paper_emulate == 'Pompili2018':
-    emitt_N = 0.8e-6
+    emitt_Nx = 0.8e-6
+    emitt_Ny = 0.5e-6
     energy_MeV = 127
 elif paper_emulate == 'Pompili2017':
-    emitt_N = 1.e-6
+    emitt_Nx = 1.e-6
+    emitt_Ny = emitt_Nx
     energy_MeV = 126
 
 # Sigma
@@ -55,12 +59,14 @@ elif paper_emulate == 'Pompili2017':
 # Derivative of sigma w.r.t. z
 if paper_emulate == 'Pompili2018':
     d_sigma_x = (113.-105.)/25.*1.e-4
+    d_simga_y = d_sigma_x
     # NB: l'aumento di emitt cambia poco al variare di d_sigma_x (varia anche se decommento qualche riga qui sotto)
     #d_sigma_x -= d_sigma_x*0.5
     #d_sigma_x+-= d_sigma_x*0.5
     #d_sigma_x = 0.0
 elif paper_emulate == 'Pompili2017':
     d_sigma_x = (130.-110.)/25.*1.e-4  # Circa...
+    d_simga_y = d_sigma_x
 
 #pluto_nframes = [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300]  # list(range(321))
 if paper_emulate == 'Pompili2017' or paper_emulate == 'Pompili2018':
@@ -70,41 +76,52 @@ else :
     raise ValueError('Wrong choice for paper to emulate')
 
 #%% Computations
-# Number of particles
+# Number of particles in beam
 Npart = 10000
 gamma = energy_MeV/me_MeV
-cov_xxp = sigma_x * d_sigma_x
-emitt = emitt_N/gamma
-sigma_xp = np.sqrt((emitt**2 + cov_xxp**2)/sigma_x**2)
 
-mean = [0,0]
-cov = [[sigma_x**2, cov_xxp], [cov_xxp, sigma_xp**2]]
-
-# Generate distribution
-x, xp = np.random.multivariate_normal(mean, cov, Npart).T
-
-Npart_outside_cap = np.sum(np.abs(x) > r_cap)
-print('{} of {} beam particles are ouside capillary, I remove them.'.format(Npart_outside_cap, Npart))
+# Build x distribution ---
+emitt_x = emitt_Nx/gamma
+x, xp = apl.generate_beam_transverse(sigma_x, d_sigma_x, emitt_x, Npart)
+# Build y distribution ---
+emitt_y = emitt_Ny/gamma
+y, yp = apl.generate_beam_transverse(sigma_y, d_sigma_y, emitt_y, Npart)
+# Clean particles outside capillary
+idx_part_outside_cap = (x**2+y**2 > r_cap**2)
+print('{} of {} beam particles are ouside capillary, I remove them.'.format(np.sum(idx_part_outside_capx),
+                                                                            Npart))
+x = np.delete(x, idx_part_outside_cap)
+y = np.delete(y, idx_part_outside_cap)
 
 #%% Check if distro is ok
-#cov_xxp_test = np.cov(np.stack([x,xp]))[0,1]
-#sigma_x_test = x.std()
-#sigma_xp_test = xp.std()
-#emitt_N_test = gamma*np.sqrt(sigma_x_test**2 * sigma_xp_test**2 -  cov_xxp_test**2)
-
-emitt_test, sigma_x_test, sigma_xp_test, cov_xxp_test   = apl.emittance(x, xp)
-emitt_N_test = gamma*emitt_test
+# --- x ---
+emitt_x_test, sigma_x_test, sigma_xp_test, cov_xxp_test   = apl.emittance(x, xp)
+emitt_Nx_test = gamma*emitt_x_test
 
 print('generated distro with {} partilces'.format(Npart))
 print('Emittance (normalized):')
-print('{:.5g} mm mrad (required);{:.5g} mm mrad (obtained)'.format(emitt_N*1e6,
-                                                             emitt_N_test*1e6))
+print('{:.5g} mm mrad (required);{:.5g} mm mrad (obtained)'.format(emitt_Nx*1e6,
+                                                             emitt_Nx_test*1e6))
 print('Spot:')
 print('{:.5g} μm (required);{:.5g} μm (obtained)'.format(sigma_x*1e6,
                                                              sigma_x_test*1e6))
 print("Covariance x,x':")
 print('{:.5g} m (required);{:.5g} m mrad (obtained)'.format(cov_xxp,
                                                              cov_xxp_test))
+# --- y ---
+emitt_y_test, sigma_y_test, sigma_yp_test, cov_yyp_test   = apl.emittance(y, yp)
+emitt_Ny_test = gamma*emitt_y_test
+
+print('generated distro with {} partilces'.format(Npart))
+print('Emittance (normalized):')
+print('{:.5g} mm mrad (required);{:.5g} mm mrad (obtained)'.format(emitt_Ny*1e6,
+                                                             emitt_Ny_test*1e6))
+print('Spot:')
+print('{:.5g} μm (required);{:.5g} μm (obtained)'.format(sigma_y*1e6,
+                                                             sigma_y_test*1e6))
+print("Covariance x,x':")
+print('{:.5g} m (required);{:.5g} m mrad (obtained)'.format(cov_yyp,
+                                                             cov_yyp_test))
 
 #%% Particles pass in APL, Test case, ideal (no aberration, uniform k)
 I = 70.  # Ampere
@@ -116,9 +133,9 @@ Dxp_test = - K_test*x
 
 xp_new_test = xp+Dxp_test
 
-emitt_new_test, sigma_x_new_test, sigma_xp_new_test, cov_xxp_new_test   = apl.emittance(x, xp)
-emitt_N_test = gamma*emitt_test
-emitt_N_new_test = gamma*emitt_new_test
+emitt_x_new_test, sigma_x_new_test, sigma_xp_new_test, cov_xxp_new_test   = apl.emittance(x, xp)
+emitt_Nx_test = gamma*emitt_x_test
+emitt_Nx_new_test = gamma*emitt_x_new_test
 
 #%% Particles pass in real APL
 times, r_c, g_real, Dg_real = apl.g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap)
@@ -127,7 +144,7 @@ times = times*time_unit_pluto
 
 g_real_interp = np.zeros((len(x), g_real.shape[1]))
 for tt in range(g_real.shape[1]):
-    g_real_interp[:,tt] = np.interp(x,
+    g_real_interp[:,tt] = np.interp(np.sqrt(x**2+y**2),
                                     np.concatenate((np.flip(-r_c[1:], axis=0), r_c)),
                                     np.concatenate((np.flip(g_real[1:,tt], axis=0), g_real[:,tt])))
 
@@ -153,7 +170,7 @@ for tt in range(K.shape[1]):
 t, I = ut.get_currtab(sim)
 #I_apl = np.interp(times, t, I)
 
-emitt_N_new = emitt_new*gamma
+emitt_Nx_new = emitt_x_new*gamma
 
 #%% Plot
 #plt.close('all')
@@ -164,7 +181,7 @@ ax.plot(t*1e9, I, '-', color='k', label='Current')
 ax.set_ylim(bottom=0.)
 ax_emitt = ax.twinx()
 ax_emitt.plot(times*1e9, emitt_N_new*1e6, 'o-', color='b', label='Emitt.')
-ax_emitt.axhline(y=emitt_N*1e6, linestyle='--', color='b', label='Emitt. no plasma')
+ax_emitt.axhline(y=emitt_Nx*1e6, linestyle='--', color='b', label='Emitt. no plasma')
 ax_emitt.set_ylabel('Emittance (mm mrad)')
 ax_emitt.set_ylim(bottom=0., top=15.)
 fig.legend()
