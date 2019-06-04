@@ -108,7 +108,7 @@ def g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap):
 
     return times, r_c, g, Dg
 
-def ne_avg_over_r(sim, pluto_nframes, average_ne, z_lines=None):
+def ne_avg_over_r(sim, pluto_nframes, average_ne, z_lines=None, ret_z_cell_borders=False):
     '''
     Compute max electron density over the transverse section (r direction).
     return a vector of ne, the elements of ne correspond to different z positions
@@ -156,5 +156,7 @@ def ne_avg_over_r(sim, pluto_nframes, average_ne, z_lines=None):
             else:
                 raise ValueError('Wrong choice for average_ne')
         ne_avg_r_sims.append(ne_avg_r)
-
-    return z_lines, ne_avg_r_sims, times
+    if ret_z_cell_borders:
+        return z_lines, z, ne_avg_r_sims, times
+    else:
+        return z_lines, ne_avg_r_sims, times

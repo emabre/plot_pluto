@@ -32,7 +32,7 @@ plot_ne_map_each_frame = False
 # fastest varying index: frames for the same simulation, slower running index: simulation
 #pluto_nframes = [80, 160, 200]
 # pluto_nframes = [20*ii for ii in range(1,15)]
-time = [200.,300.,400.,500.,600.,700.,800.,]
+time = [200., 250., 300.,400.,500.,600.,700.,800.,]
 # pluto_nframes = [80]
 # z position of z-const lines (in cm)
 # Z lines settings, z lines always start from 0
