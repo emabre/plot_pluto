@@ -53,20 +53,22 @@ elif paper_emulate == 'Pompili2017':
 #sigma_x = 100.e-6
 if paper_emulate == 'Pompili2018':
     sigma_x = 110.e-6
+    sigma_y = sigma_x
 elif paper_emulate == 'Pompili2017':
     sigma_x = 130.e-6
+    sigma_y = sigma_x
 
 # Derivative of sigma w.r.t. z
 if paper_emulate == 'Pompili2018':
     d_sigma_x = (113.-105.)/25.*1.e-4
-    d_simga_y = d_sigma_x
+    d_sigma_y = d_sigma_x
     # NB: l'aumento di emitt cambia poco al variare di d_sigma_x (varia anche se decommento qualche riga qui sotto)
     #d_sigma_x -= d_sigma_x*0.5
     #d_sigma_x+-= d_sigma_x*0.5
     #d_sigma_x = 0.0
 elif paper_emulate == 'Pompili2017':
     d_sigma_x = (130.-110.)/25.*1.e-4  # Circa...
-    d_simga_y = d_sigma_x
+    d_sigma_y = d_sigma_x
 
 #pluto_nframes = [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300]  # list(range(321))
 if paper_emulate == 'Pompili2017' or paper_emulate == 'Pompili2018':
@@ -88,40 +90,10 @@ emitt_y = emitt_Ny/gamma
 y, yp = apl.generate_beam_transverse(sigma_y, d_sigma_y, emitt_y, Npart)
 # Clean particles outside capillary
 idx_part_outside_cap = (x**2+y**2 > r_cap**2)
-print('{} of {} beam particles are ouside capillary, I remove them.'.format(np.sum(idx_part_outside_capx),
+print('{} of {} beam particles are ouside capillary, I remove them.'.format(np.sum(idx_part_outside_cap),
                                                                             Npart))
-x = np.delete(x, idx_part_outside_cap)
-y = np.delete(y, idx_part_outside_cap)
-
-#%% Check if distro is ok
-# --- x ---
-emitt_x_test, sigma_x_test, sigma_xp_test, cov_xxp_test   = apl.emittance(x, xp)
-emitt_Nx_test = gamma*emitt_x_test
-
-print('generated distro with {} partilces'.format(Npart))
-print('Emittance (normalized):')
-print('{:.5g} mm mrad (required);{:.5g} mm mrad (obtained)'.format(emitt_Nx*1e6,
-                                                             emitt_Nx_test*1e6))
-print('Spot:')
-print('{:.5g} μm (required);{:.5g} μm (obtained)'.format(sigma_x*1e6,
-                                                             sigma_x_test*1e6))
-print("Covariance x,x':")
-print('{:.5g} m (required);{:.5g} m mrad (obtained)'.format(cov_xxp,
-                                                             cov_xxp_test))
-# --- y ---
-emitt_y_test, sigma_y_test, sigma_yp_test, cov_yyp_test   = apl.emittance(y, yp)
-emitt_Ny_test = gamma*emitt_y_test
-
-print('generated distro with {} partilces'.format(Npart))
-print('Emittance (normalized):')
-print('{:.5g} mm mrad (required);{:.5g} mm mrad (obtained)'.format(emitt_Ny*1e6,
-                                                             emitt_Ny_test*1e6))
-print('Spot:')
-print('{:.5g} μm (required);{:.5g} μm (obtained)'.format(sigma_y*1e6,
-                                                             sigma_y_test*1e6))
-print("Covariance x,x':")
-print('{:.5g} m (required);{:.5g} m mrad (obtained)'.format(cov_yyp,
-                                                             cov_yyp_test))
+# x = np.delete(x, idx_part_outside_cap)
+# y = np.delete(y, idx_part_outside_cap)
 
 #%% Particles pass in APL, Test case, ideal (no aberration, uniform k)
 I = 70.  # Ampere
@@ -134,7 +106,7 @@ Dxp_test = - K_test*x
 xp_new_test = xp+Dxp_test
 
 emitt_x_new_test, sigma_x_new_test, sigma_xp_new_test, cov_xxp_new_test   = apl.emittance(x, xp)
-emitt_Nx_test = gamma*emitt_x_test
+emitt_Nx_test = gamma*emitt_x
 emitt_Nx_new_test = gamma*emitt_x_new_test
 
 #%% Particles pass in real APL
@@ -157,12 +129,12 @@ for tt in range(K.shape[1]):
     xp_new[:,tt] = xp + Dxp[:,tt]
 
 # New emittance after lens
-emitt_new = np.zeros(xp_new.shape[1])
+emitt_x_new = np.zeros(xp_new.shape[1])
 sigma_x_new = np.zeros(xp_new.shape[1])
 sigma_xp_new = np.zeros(xp_new.shape[1])
 cov_xxp_new = np.zeros(xp_new.shape[1])
 for tt in range(K.shape[1]):
-    (emitt_new[tt],
+    (emitt_x_new[tt],
      sigma_x_new[tt],
      sigma_xp_new[tt],
      cov_xxp_new[tt]) = apl.emittance(x, xp_new[:,tt])
@@ -180,7 +152,7 @@ fig, ax = plt.subplots()
 ax.plot(t*1e9, I, '-', color='k', label='Current')
 ax.set_ylim(bottom=0.)
 ax_emitt = ax.twinx()
-ax_emitt.plot(times*1e9, emitt_N_new*1e6, 'o-', color='b', label='Emitt.')
+ax_emitt.plot(times*1e9, emitt_Nx_new*1e6, 'o-', color='b', label='Emitt.')
 ax_emitt.axhline(y=emitt_Nx*1e6, linestyle='--', color='b', label='Emitt. no plasma')
 ax_emitt.set_ylabel('Emittance (mm mrad)')
 ax_emitt.set_ylim(bottom=0., top=15.)
@@ -189,7 +161,7 @@ ax.set_xlabel('Time (ns)')
 ax.set_ylabel('Current (A)')
 title = os.path.basename(sim) + "\nσ={:.3g}μm, σ'={:.3g}, ε={:.3g} mm mrad".format(1e6*sigma_x,
                                                                                      d_sigma_x,
-                                                                                     emitt_N)
+                                                                                     emitt_Nx)
 title += "Lc={:.3g}cm, Rc={:.3g}mm".format(1e2*l_cap,
                                                  1e3*r_cap)
 fig.suptitle(title, color='r')

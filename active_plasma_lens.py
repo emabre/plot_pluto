@@ -15,16 +15,24 @@ def emittance(x, xp):
     emitt = np.sqrt(sigma_x**2 * sigma_xp**2 -  cov_xxp**2)
     return emitt, sigma_x, sigma_xp, cov_xxp
 
-def generate_beam_transverse(sigma_x, d_sigma_x, emitt_x, Npart):
+def generate_beam_transverse(sigma_x, d_sigma_x, emitt_x, Npart, check_distro=True):
     '''Build transverse distribution of particles inside beam from rms emittance,
     rms size and z-derivative of rms size.'''
 
+    cov_xxp = sigma_x * d_sigma_x
     sigma_xp = np.sqrt((emitt_x**2 + cov_xxp**2)/sigma_x**2)
     # mean and cov
     mean = [0,0]
-    cov_x = [[sigma_x**2, cov_xxp], [cov_xxp, sigma_xp**2]]
+    cov = [[sigma_x**2, cov_xxp], [cov_xxp, sigma_xp**2]]
     # Generate distribution
     x, xp = np.random.multivariate_normal(mean, cov, Npart).T
+
+    if check_distro:
+        print('generated distro with {} partilces'.format(Npart))
+        print('Emittance relative error: {}'.format((emitt_x-emittance(x, xp)[0])/emitt_x))
+        print('Spot:')
+        print('Spot rms, required:{:.5g}; obtained: {:.5g}'.format(sigma_x,
+                                                                   np.std(x)))
     return x, xp
 
 #
