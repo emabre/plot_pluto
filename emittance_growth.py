@@ -24,15 +24,7 @@ me_MeV = 0.511
 paper_emulate = 'Pompili2018'
 
 # #sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-1.2cm'
-# # sim = '/home/ema/simulazioni/sims_pluto/perTesi/600mbar-I235-3.2cmL-1mmD'
-# sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-8-I235-3.2cmL-1mmD'
 # ---
-# sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-8-I90-3.2cmL-1mmD'
-# sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
-# sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I90-3.2cmL-1mmD'
-# sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-6-I90-3.2cmL-1mmD'
-# sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I235-3.2cmL-1mmD-r60'
-sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I235-3.2cmL-1mmD'
 
 pluto_nframes = list(range(0,150,5))  # list(range(0,301,10))
 time_unit_pluto = 1e-9  # unit time in pluto's simulation (in s)
@@ -43,37 +35,37 @@ if paper_emulate == 'Pompili2018':
     emitt_Nx = 0.8e-6
     emitt_Ny = 0.5e-6
     energy_MeV = 127
-elif paper_emulate == 'Pompili2017':
-    emitt_Nx = 1.e-6
-    emitt_Ny = emitt_Nx
-    energy_MeV = 126
-
-# Sigma
-# NB: l'aumento di emitt cambia molto al variare di d_sigma_x
-#sigma_x = 100.e-6
-if paper_emulate == 'Pompili2018':
+    # NB: l'aumento di emitt cambia molto al variare di d_sigma_x
+    #sigma_x = 100.e-6
     sigma_x = 110.e-6
     sigma_y = sigma_x
-elif paper_emulate == 'Pompili2017':
-    sigma_x = 130.e-6
-    sigma_y = sigma_x
-
-# Derivative of sigma w.r.t. z
-if paper_emulate == 'Pompili2018':
     d_sigma_x = (113.-105.)/25.*1.e-4
     d_sigma_y = d_sigma_x
     # NB: l'aumento di emitt cambia poco al variare di d_sigma_x (varia anche se decommento qualche riga qui sotto)
     #d_sigma_x -= d_sigma_x*0.5
     #d_sigma_x+-= d_sigma_x*0.5
     #d_sigma_x = 0.0
-elif paper_emulate == 'Pompili2017':
-    d_sigma_x = (130.-110.)/25.*1.e-4  # Circa...
-    d_sigma_y = d_sigma_x
-
-#pluto_nframes = [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300]  # list(range(321))
-if paper_emulate == 'Pompili2017' or paper_emulate == 'Pompili2018':
     l_cap = 3.2e-2  # m
     r_cap = 0.5e-3  # m
+    sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I235-3.2cmL-1mmD-r60'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I235-3.2cmL-1mmD'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-8-I235-3.2cmL-1mmD'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/600mbar-I235-3.2cmL-1mmD'
+
+elif paper_emulate == 'Pompili2017':
+    emitt_Nx = 1.e-6
+    emitt_Ny = emitt_Nx
+    energy_MeV = 126
+    sigma_x = 130.e-6
+    sigma_y = sigma_x
+    d_sigma_x = (130.-110.)/25.*1.e-4  # Circa...
+    d_sigma_y = d_sigma_x
+    l_cap = 3.2e-2  # m
+    r_cap = 0.5e-3  # m
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-8-I90-3.2cmL-1mmD'
+    sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I90-3.2cmL-1mmD'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-6-I90-3.2cmL-1mmD'
 else :
     raise ValueError('Wrong choice for paper to emulate')
 
