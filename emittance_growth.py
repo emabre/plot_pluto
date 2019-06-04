@@ -20,8 +20,8 @@ importlib.reload(apl)
 me_MeV = 0.511
 
 #%% Setting
-# paper_emulate = 'Pompili2017'
-paper_emulate = 'Pompili2018'
+paper_emulate = 'Pompili2017'
+# paper_emulate = 'Pompili2018'
 
 # #sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-1.2cm'
 # ---
@@ -39,7 +39,7 @@ if paper_emulate == 'Pompili2018':
     #sigma_x = 100.e-6
     sigma_x = 110.e-6
     sigma_y = sigma_x
-    d_sigma_x = (113.-105.)/25.*1.e-4
+    d_sigma_x = -(113.-105.)/25.*1.e-4
     d_sigma_y = d_sigma_x
     # NB: l'aumento di emitt cambia poco al variare di d_sigma_x (varia anche se decommento qualche riga qui sotto)
     #d_sigma_x -= d_sigma_x*0.5
@@ -51,6 +51,7 @@ if paper_emulate == 'Pompili2018':
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I235-3.2cmL-1mmD'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-8-I235-3.2cmL-1mmD'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/600mbar-I235-3.2cmL-1mmD'
+    Dz = 20e-2  # meters
 
 elif paper_emulate == 'Pompili2017':
     emitt_Nx = 1.e-6
@@ -58,7 +59,8 @@ elif paper_emulate == 'Pompili2017':
     energy_MeV = 126
     sigma_x = 130.e-6
     sigma_y = sigma_x
-    d_sigma_x = (130.-110.)/25.*1.e-4  # Circa...
+    # d_sigma_x = 0
+    d_sigma_x = -(130.-110.)/20.*1.e-4  # Circa... (vedi Fig 6b. sigma(z=9cm)=200um, sigma(z=11cm)=150um -> sigma'=Dsigma/Dz=25*10^-4)
     d_sigma_y = d_sigma_x
     l_cap = 3.2e-2  # m
     r_cap = 0.5e-3  # m
@@ -66,6 +68,7 @@ elif paper_emulate == 'Pompili2017':
     sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I90-3.2cmL-1mmD'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-6-I90-3.2cmL-1mmD'
+    Dz = 20e-2  # meters
 else :
     raise ValueError('Wrong choice for paper to emulate')
 
@@ -122,15 +125,17 @@ for tt in range(K.shape[1]):
 
 # New emittance after lens
 emitt_x_new = np.zeros(xp_new.shape[1])
-sigma_x_new = np.zeros(xp_new.shape[1])
-sigma_xp_new = np.zeros(xp_new.shape[1])
-cov_xxp_new = np.zeros(xp_new.shape[1])
 for tt in range(K.shape[1]):
-    (emitt_x_new[tt],
-     sigma_x_new[tt],
-     sigma_xp_new[tt],
-     cov_xxp_new[tt]) = apl.emittance(x, xp_new[:,tt])
+    emitt_x_new[tt] = apl.emittance(x, xp_new[:,tt])[0]
 
+# New spot after drift Dz following lens
+sigma_x_new = np.zeros(xp_new.shape[1])
+x_new = np.zeros(K.shape)
+for tt in range(K.shape[1]):
+    x_new[:,tt] = x + Dz*(xp_new[:,tt])
+    sigma_x_new[tt] = np.std(x_new[:,tt])
+
+# Get current set in simulation
 t, I = ut.get_currtab(sim)
 #I_apl = np.interp(times, t, I)
 
@@ -139,8 +144,8 @@ emitt_Nx_new = emitt_x_new*gamma
 #%% Plot
 #plt.close('all')
 
+# Emittance
 fig, ax = plt.subplots()
-
 ax.plot(t*1e9, I, '-', color='k', label='Current')
 ax.set_ylim(bottom=0.)
 ax_emitt = ax.twinx()
@@ -160,3 +165,30 @@ fig.suptitle(title, color='r')
 # ax.set_title(title)
 #ax.legend()
 plt.tight_layout()
+
+# Spot
+fig, ax = plt.subplots()
+ax.plot(t*1e9, I, '-', color='k', label='Current')
+ax.set_ylim(bottom=0.)
+ax_spot = ax.twinx()
+ax_spot.plot(times*1e9, sigma_x_new*1e6, 'o-', color='b', label='Spot rms')
+# ax_spot.axhline(y=emitt_Nx*1e6, linestyle='--', color='b', label='Emitt. no plasma')
+ax_spot.set_ylabel('Spot (mm mrad)')
+# ax_spot.set_ylim(bottom=0., top=15.)
+fig.legend()
+ax.set_xlabel('Time (ns)')
+ax.set_ylabel('Current (A)')
+title = os.path.basename(sim) + "\nσ={:.3g}μm, σ'={:.3g}, ε={:.3g} mm mrad".format(1e6*sigma_x,
+                                                                                     d_sigma_x,
+                                                                                     emitt_Nx)
+title += "Lc={:.3g}cm, Rc={:.3g}mm".format(1e2*l_cap,
+                                           1e3*r_cap)
+fig.suptitle(title, color='r')
+# ax.set_title(title)
+#ax.legend()
+plt.tight_layout()
+
+# Trace space
+fig, ax = plt.subplots(nrows=2)
+ax[0].scatter(x,xp)
+ax[1].scatter(x_new,xp_new)

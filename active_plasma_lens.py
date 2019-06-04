@@ -29,6 +29,7 @@ def generate_beam_transverse(sigma_x, d_sigma_x, emitt_x, Npart, check_distro=Tr
 
     if check_distro:
         print('generated distro with {} partilces'.format(Npart))
+        # print(emitt_x)
         print('Emittance relative error: {}'.format((emitt_x-emittance(x, xp)[0])/emitt_x))
         print('Spot:')
         print('Spot rms, required:{:.5g}; obtained: {:.5g}'.format(sigma_x,
