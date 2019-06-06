@@ -219,17 +219,18 @@ ax[1].scatter(x_new,xp_new)
 #%% Plot for thesis
 # Emittance
 fig_I_th, ax_I_th = plt.subplots()
-ax_I_th.plot(t*1e9, I, '-', lw=4, color='ababab', label='Current')
+ax_I_th.plot(t*1e9, I, '-', lw=4, c='darkgray', label='Current')
 ax_I_th.set_ylim(bottom=0.)
 ax_em_th = ax_I_th.twinx()
-ax_em_th.plot(times*1e9, emitt_Nx_new*1e6, color='ababab', lw=3, label='Simulated')
+ax_em_th.plot(times*1e9, emitt_Nx_new*1e6, color='purple', lw=2, label='$\epsilon_N$ simulated')
 
 ax_em_th.errorbar(emitt_Nx_new_meas[:,0]*1e9, emitt_Nx_new_meas[:,1], yerr=errorbars_Nx_new_meas,
-                  color='b', linestyle='--', label='Measured, x')
-ax_em_th.errorbar(emitt_Ny_new_meas[:,0]*1e9, emitt_Ny_new_meas[:,1], yerr=errorbars_Ny_new_meas,
-                  color='r', linestyle='--', marker='o', label='Measured, y',
+                  color='b', linestyle='--',marker='o', label='$\epsilon_{N,y}$, measured',
                   uplims=True, lolims=True)
-ax_em_th.axhline(y=emitt_Nx*1e6, linestyle='--', color='b', label='Emitt. no plasma')
+ax_em_th.errorbar(emitt_Ny_new_meas[:,0]*1e9, emitt_Ny_new_meas[:,1], yerr=errorbars_Ny_new_meas,
+                  color='r', linestyle='--', marker='o', label='$\epsilon_{N,y}$, measured',
+                  uplims=True, lolims=True)
+ax_em_th.axhline(y=emitt_Nx*1e6, linestyle='--', lw=2, color='purple', label='$\epsilon_N$ no plasma')
 ax_em_th.set_ylabel('Emittance (mm mrad)')
 ax_em_th.set_ylim(bottom=0., top=15.)
 fig_I_th.legend()
