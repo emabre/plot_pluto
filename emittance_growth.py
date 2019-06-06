@@ -26,7 +26,7 @@ paper_emulate = 'Pompili2017'
 # #sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-1.2cm'
 # ---
 
-pluto_nframes = list(range(0,150,5))  # list(range(0,301,10))
+pluto_nframes = list(range(0,241,5))  # list(range(0,301,10))
 time_unit_pluto = 1e-9  # unit time in pluto's simulation (in s)
 
 # ----- Beam -----
@@ -64,11 +64,14 @@ elif paper_emulate == 'Pompili2017':
     d_sigma_y = d_sigma_x
     l_cap = 3.2e-2  # m
     r_cap = 0.5e-3  # m
-    # Emittance MEASURED (and respective timing w.r.t. discharge start) after capillary
+    # Emittance MEASURED (and respective timing w.r.t. discharge peak) after capillary
     emitt_Nx_new_meas = np.loadtxt('/home/ema/Dottorato/dati_sperimentali_e_calcoli/Tabulazione_esperimAPL/ArticoloPompili2017/extracted_data/emitt_x.dat')
     errorbars_Nx_new_meas = [0.01,0.2,1.75,0.2]
     errorbars_Ny_new_meas = [0.01,0.35,1.7,0.15]
     emitt_Ny_new_meas = np.loadtxt('/home/ema/Dottorato/dati_sperimentali_e_calcoli/Tabulazione_esperimAPL/ArticoloPompili2017/extracted_data/emitt_y.dat')
+    # Spot MEASURED (and respective timing w.r.t. discharge peak) after capillary
+    sigma_x_new_meas = np.loadtxt('/home/ema/Dottorato/dati_sperimentali_e_calcoli/Tabulazione_esperimAPL/ArticoloPompili2017/extracted_data/spot_x.dat')
+    sigma_y_new_meas = np.loadtxt('/home/ema/Dottorato/dati_sperimentali_e_calcoli/Tabulazione_esperimAPL/ArticoloPompili2017/extracted_data/spot_y.dat')
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-8-I90-3.2cmL-1mmD'
     sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho4.5e-7-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
@@ -143,19 +146,35 @@ for tt in range(K.shape[1]):
 
 # Get current set in simulation
 t, I = ut.get_currtab(sim)
+
+# Fix emittance measurement to fit with the present ordering and conventions
 # Get dt to shift data (my data is time shifted w.r.t. the articles (they put t=0 at max I))
 dt = t[np.argmax(I)]
 def convert_emitt_meas(emitt_N_new_meas, dt):
-    # Fix eamittance measurement to fit with the present ordering and conventions
+    ''' Fix eamittance measurement to fit with the present ordering and conventions'''
     idx_ord_emitt = np.argsort(emitt_N_new_meas[:,0])
     emitt_N_new_meas = emitt_N_new_meas[idx_ord_emitt,:]
     # Convert time to seconds as the rest of the data I have here
     emitt_N_new_meas[:,0] *= 1e-9
     emitt_N_new_meas[:,0] += dt
     emitt_N_new_meas = emitt_N_new_meas[:-1,:]
+    emitt_N_new_meas[:,1] = emitt_N_new_meas[:,1]*1e-6
     return emitt_N_new_meas
 emitt_Nx_new_meas = convert_emitt_meas(emitt_Nx_new_meas, dt)
 emitt_Ny_new_meas = convert_emitt_meas(emitt_Ny_new_meas, dt)
+
+# Fix spot measurement to fit with the present ordering and conventions
+def convert_emitt_meas(spot_new_meas, dt):
+    ''' Fix eamittance measurement to fit with the present ordering and conventions'''
+    idx_ord_spot = np.argsort(spot_new_meas[:,0])
+    spot_new_meas = spot_new_meas[idx_ord_spot,:]
+    # Convert time to seconds as the rest of the data I have here
+    spot_new_meas[:,0] *= 1e-9
+    spot_new_meas[:,0] += dt
+    spot_new_meas[:,1] = spot_new_meas[:,1]*1e-6
+    return spot_new_meas
+sigma_x_new_meas = convert_emitt_meas(sigma_x_new_meas, dt)
+sigma_y_new_meas = convert_emitt_meas(sigma_y_new_meas, dt)
 
 #I_apl = np.interp(times, t, I)
 
@@ -213,10 +232,11 @@ fig, ax = plt.subplots(nrows=2)
 ax[0].scatter(x,xp)
 ax[1].scatter(x_new,xp_new)
 
-# -------------------------------------------------------------------------
-# -------------------------------------------------------------------------
-# -------------------------------------------------------------------------
+
 #%% Plot for thesis
+# -------------------------------------------------------------------------
+# -------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 # Emittance
 fig_I_th, ax_em_th = plt.subplots(figsize=(4.5,3.))
 
@@ -225,13 +245,13 @@ emitt_sim, = ax_em_th.plot(times*1e9, emitt_Nx_new*1e6, color='purple',
                           # label='$\epsilon_N$ simulated',
                           zorder=10)
 
-emitt_x_meas = ax_em_th.errorbar(emitt_Nx_new_meas[:,0]*1e9, emitt_Nx_new_meas[:,1], yerr=errorbars_Nx_new_meas,
+emitt_x_meas = ax_em_th.errorbar(emitt_Nx_new_meas[:,0]*1e9, emitt_Nx_new_meas[:,1]*1e6, yerr=errorbars_Nx_new_meas,
                                   color='b', linestyle='--', marker='o',
                                   # label='$\epsilon_{N,y}$, measured',
                                   uplims=True,
                                   lolims=True,
                                   zorder=8)
-emitt_y_meas = ax_em_th.errorbar(emitt_Ny_new_meas[:,0]*1e9, emitt_Ny_new_meas[:,1], yerr=errorbars_Ny_new_meas,
+emitt_y_meas = ax_em_th.errorbar(emitt_Ny_new_meas[:,0]*1e9, emitt_Ny_new_meas[:,1]*1e6, yerr=errorbars_Ny_new_meas,
                                   color='r', linestyle='--', marker='o',
                                   # label='$\epsilon_{N,y}$, measured',
                                   uplims=True, lolims=True, zorder=9)
@@ -253,15 +273,55 @@ ax_em_th.set_xlim([0.,1200])
 # ax_em_th.legend(loc=1)
 ax_em_th.legend([curr, emitt_x_meas, emitt_y_meas, emitt_base, emitt_sim],
                 ['Current',
-                 '$\epsilon_{N,y}$, measured',
-                 '$\epsilon_{N,y}$, measured',
+                 '$\epsilon_{N,x}$ measured',
+                 '$\epsilon_{N,y}$ measured',
                  '$\epsilon_N$ no plasma',
                  '$\epsilon_N$ simulated'])
-# fig_I_th.legend(loc=1)
 
 ax_em_th.set_xlabel('Time (ns)')
 ax_I_th.set_ylabel('Current (A)')
-title = os.path.basename(sim) + "\nσ={:.3g}μm, σ'={:.3g}, ε={:.3g} mm mrad".format(1e6*sigma_x,
-                                                                                     d_sigma_x,
-                                                                                     emitt_Nx)
+
+plt.tight_layout()
+
+# -------------------------------------------------------------------------
+# -------------------------------------------------------------------------
+# -------------------------------------------------------------------------
+# Spot
+fig_I_th, ax_sp_th = plt.subplots(figsize=(4.5,3.))
+
+spot_sim, = ax_sp_th.plot(times*1e9, sigma_x_new*1e6,
+                          color='purple',
+                          lw=2,
+                          # label='$\epsilon_N$ simulated',
+                          zorder=10)
+spot_x_meas, = ax_sp_th.plot(sigma_x_new_meas[:,0]*1e9,
+                            sigma_x_new_meas[:,1]*1e6,
+                            color='b', linestyle='--', marker='o',
+                            # label='$\epsilon_{N,y}$, measured',
+                            zorder=8)
+spot_y_meas, = ax_sp_th.plot(sigma_y_new_meas[:,0]*1e9,
+                            sigma_y_new_meas[:,1]*1e6,
+                            color='r', linestyle='--', marker='o',
+                            # label='$\epsilon_{N,y}$, measured',
+                            zorder=8)
+
+ax_I_th_sp = ax_sp_th.twinx()
+curr, = ax_I_th_sp.plot(t*1e9, I, '-', lw=3, c='darkgray', zorder=0)
+ax_I_th_sp.set_ylim(bottom=0., top=100.)
+ax_I_th_sp.set_zorder(ax_sp_th.get_zorder()-1)
+ax_sp_th.patch.set_visible(False)
+
+ax_sp_th.set_ylabel('Spot rms (μm)')
+ax_sp_th.set_xlim([0.,1200])
+
+# ax_sp_th.legend(loc=1)
+ax_sp_th.legend([curr, spot_x_meas, spot_y_meas, spot_sim],
+                ['Current',
+                 '$\sigma_{x}$ measured',
+                 '$\sigma_{y}$ measured',
+                 '$\sigma$ simulated'])
+
+ax_em_th.set_xlabel('Time (ns)')
+ax_I_th_sp.set_ylabel('Current (A)')
+
 plt.tight_layout()
