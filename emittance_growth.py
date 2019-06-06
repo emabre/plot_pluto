@@ -218,30 +218,50 @@ ax[1].scatter(x_new,xp_new)
 # -------------------------------------------------------------------------
 #%% Plot for thesis
 # Emittance
-fig_I_th, ax_I_th = plt.subplots()
-ax_I_th.plot(t*1e9, I, '-', lw=4, c='darkgray', label='Current')
-ax_I_th.set_ylim(bottom=0.)
-ax_em_th = ax_I_th.twinx()
-ax_em_th.plot(times*1e9, emitt_Nx_new*1e6, color='purple', lw=2, label='$\epsilon_N$ simulated')
+fig_I_th, ax_em_th = plt.subplots(figsize=(4.5,3.))
 
-ax_em_th.errorbar(emitt_Nx_new_meas[:,0]*1e9, emitt_Nx_new_meas[:,1], yerr=errorbars_Nx_new_meas,
-                  color='b', linestyle='--',marker='o', label='$\epsilon_{N,y}$, measured',
-                  uplims=True, lolims=True)
-ax_em_th.errorbar(emitt_Ny_new_meas[:,0]*1e9, emitt_Ny_new_meas[:,1], yerr=errorbars_Ny_new_meas,
-                  color='r', linestyle='--', marker='o', label='$\epsilon_{N,y}$, measured',
-                  uplims=True, lolims=True)
-ax_em_th.axhline(y=emitt_Nx*1e6, linestyle='--', lw=2, color='purple', label='$\epsilon_N$ no plasma')
+emitt_sim, = ax_em_th.plot(times*1e9, emitt_Nx_new*1e6, color='purple',
+                          lw=2,
+                          # label='$\epsilon_N$ simulated',
+                          zorder=10)
+
+emitt_x_meas = ax_em_th.errorbar(emitt_Nx_new_meas[:,0]*1e9, emitt_Nx_new_meas[:,1], yerr=errorbars_Nx_new_meas,
+                                  color='b', linestyle='--', marker='o',
+                                  # label='$\epsilon_{N,y}$, measured',
+                                  uplims=True,
+                                  lolims=True,
+                                  zorder=8)
+emitt_y_meas = ax_em_th.errorbar(emitt_Ny_new_meas[:,0]*1e9, emitt_Ny_new_meas[:,1], yerr=errorbars_Ny_new_meas,
+                                  color='r', linestyle='--', marker='o',
+                                  # label='$\epsilon_{N,y}$, measured',
+                                  uplims=True, lolims=True, zorder=9)
+emitt_base = ax_em_th.axhline(y=emitt_Nx*1e6, linestyle='--', lw=2,
+                               color='purple',
+                               # label='$\epsilon_N$ no plasma',
+                               zorder=12)
+
+ax_I_th = ax_em_th.twinx()
+curr, = ax_I_th.plot(t*1e9, I, '-', lw=3, c='darkgray', zorder=0)
+ax_I_th.set_ylim(bottom=0., top=100.)
+ax_I_th.set_zorder(ax_em_th.get_zorder()-1)
+ax_em_th.patch.set_visible(False)
+
 ax_em_th.set_ylabel('Emittance (mm mrad)')
-ax_em_th.set_ylim(bottom=0., top=15.)
-fig_I_th.legend()
+ax_em_th.set_ylim(bottom=0., top=14.)
+ax_em_th.set_xlim([0.,1200])
+
+# ax_em_th.legend(loc=1)
+ax_em_th.legend([curr, emitt_x_meas, emitt_y_meas, emitt_base, emitt_sim],
+                ['Current',
+                 '$\epsilon_{N,y}$, measured',
+                 '$\epsilon_{N,y}$, measured',
+                 '$\epsilon_N$ no plasma',
+                 '$\epsilon_N$ simulated'])
+# fig_I_th.legend(loc=1)
+
 ax_em_th.set_xlabel('Time (ns)')
-ax_em_th.set_ylabel('Current (A)')
+ax_I_th.set_ylabel('Current (A)')
 title = os.path.basename(sim) + "\nσ={:.3g}μm, σ'={:.3g}, ε={:.3g} mm mrad".format(1e6*sigma_x,
                                                                                      d_sigma_x,
                                                                                      emitt_Nx)
-# title += "Lc={:.3g}cm, Rc={:.3g}mm".format(1e2*l_cap,
-#                                                  1e3*r_cap)
-# fig_I_th.suptitle(title, color='r')
-# ax.set_title(title)
-#ax.legend()
 plt.tight_layout()
