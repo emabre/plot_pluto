@@ -64,8 +64,14 @@ elif paper_emulate == 'Pompili2017':
     d_sigma_y = d_sigma_x
     l_cap = 3.2e-2  # m
     r_cap = 0.5e-3  # m
+    # Emittance MEASURED (and respective timing w.r.t. discharge start) after capillary
+    emitt_Nx_new_meas = np.loadtxt('/home/ema/Dottorato/dati_sperimentali_e_calcoli/Tabulazione_esperimAPL/ArticoloPompili2017/extracted_data/emitt_x.dat')
+    errorbars_Nx_new_meas = [0.01,0.2,1.75,0.2]
+    errorbars_Ny_new_meas = [0.01,0.35,1.7,0.15]
+    emitt_Ny_new_meas = np.loadtxt('/home/ema/Dottorato/dati_sperimentali_e_calcoli/Tabulazione_esperimAPL/ArticoloPompili2017/extracted_data/emitt_y.dat')
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-8-I90-3.2cmL-1mmD'
-    sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
+    sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho4.5e-7-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I90-3.2cmL-1mmD'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-6-I90-3.2cmL-1mmD'
     Dz = 20e-2  # meters
@@ -137,6 +143,20 @@ for tt in range(K.shape[1]):
 
 # Get current set in simulation
 t, I = ut.get_currtab(sim)
+# Get dt to shift data (my data is time shifted w.r.t. the articles (they put t=0 at max I))
+dt = t[np.argmax(I)]
+def convert_emitt_meas(emitt_N_new_meas, dt):
+    # Fix eamittance measurement to fit with the present ordering and conventions
+    idx_ord_emitt = np.argsort(emitt_N_new_meas[:,0])
+    emitt_N_new_meas = emitt_N_new_meas[idx_ord_emitt,:]
+    # Convert time to seconds as the rest of the data I have here
+    emitt_N_new_meas[:,0] *= 1e-9
+    emitt_N_new_meas[:,0] += dt
+    emitt_N_new_meas = emitt_N_new_meas[:-1,:]
+    return emitt_N_new_meas
+emitt_Nx_new_meas = convert_emitt_meas(emitt_Nx_new_meas, dt)
+emitt_Ny_new_meas = convert_emitt_meas(emitt_Ny_new_meas, dt)
+
 #I_apl = np.interp(times, t, I)
 
 emitt_Nx_new = emitt_x_new*gamma
@@ -192,3 +212,35 @@ plt.tight_layout()
 fig, ax = plt.subplots(nrows=2)
 ax[0].scatter(x,xp)
 ax[1].scatter(x_new,xp_new)
+
+# -------------------------------------------------------------------------
+# -------------------------------------------------------------------------
+# -------------------------------------------------------------------------
+#%% Plot for thesis
+# Emittance
+fig_I_th, ax_I_th = plt.subplots()
+ax_I_th.plot(t*1e9, I, '-', lw=4, color='ababab', label='Current')
+ax_I_th.set_ylim(bottom=0.)
+ax_em_th = ax_I_th.twinx()
+ax_em_th.plot(times*1e9, emitt_Nx_new*1e6, color='ababab', lw=3, label='Simulated')
+
+ax_em_th.errorbar(emitt_Nx_new_meas[:,0]*1e9, emitt_Nx_new_meas[:,1], yerr=errorbars_Nx_new_meas,
+                  color='b', linestyle='--', label='Measured, x')
+ax_em_th.errorbar(emitt_Ny_new_meas[:,0]*1e9, emitt_Ny_new_meas[:,1], yerr=errorbars_Ny_new_meas,
+                  color='r', linestyle='--', marker='o', label='Measured, y',
+                  uplims=True, lolims=True)
+ax_em_th.axhline(y=emitt_Nx*1e6, linestyle='--', color='b', label='Emitt. no plasma')
+ax_em_th.set_ylabel('Emittance (mm mrad)')
+ax_em_th.set_ylim(bottom=0., top=15.)
+fig_I_th.legend()
+ax_em_th.set_xlabel('Time (ns)')
+ax_em_th.set_ylabel('Current (A)')
+title = os.path.basename(sim) + "\nσ={:.3g}μm, σ'={:.3g}, ε={:.3g} mm mrad".format(1e6*sigma_x,
+                                                                                     d_sigma_x,
+                                                                                     emitt_Nx)
+# title += "Lc={:.3g}cm, Rc={:.3g}mm".format(1e2*l_cap,
+#                                                  1e3*r_cap)
+# fig_I_th.suptitle(title, color='r')
+# ax.set_title(title)
+#ax.legend()
+plt.tight_layout()
