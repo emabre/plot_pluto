@@ -7,6 +7,7 @@ import pluto_read_frm as prf
 from scipy.constants import mu_0
 import utilities as ut
 import active_plasma_lens as apl
+import matplotlib.image as mpimg
 
 #plt.close("all")
 importlib.reload(prf)
@@ -20,25 +21,21 @@ importlib.reload(apl)
 # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa'
 # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-rhounif-I90-3.2cm'
 # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-1.2cm'
+# measurement = 'file:///home/ema/Dottorato/dati_sperimentali_e_calcoli/misure_ne_da_confrontare/misure_capillare_1cmL-1mmD/stessa_scala_temporale/ne_I245_t50-1450ns_z0-10mm_cmapjet0-15e16_CUT.png'
+measurement = '/home/ema/Dottorato/dati_sperimentali_e_calcoli/misure_ne_da_confrontare/misure_capillare_1cmL-1mmD/stessa_scala_temporale/ne_I245_t50-1450ns_z0-10mm_cmapjet0-15e16_CUT.png'
+
 # ---
 # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-8-I90-3.2cmL-1mmD'
-# sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
+sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
+# sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho4.5e-7-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
 # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I90-3.2cmL-1mmD'
-sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I235-3.2cmL-1mmD-r15'
+# sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I235-3.2cmL-1mmD-r15'
+measurement = '/home/ema/Dottorato/dati_sperimentali_e_calcoli/misure_ne_da_confrontare/misure_capillare_3cmL-1mmD/stessa_scala_temporale/densità_elettronica/ne_I90_t150-1250ns_z0-30mm_cmapjet0-15e16_CUT.png'
 # ---
 
-plot_ne_map_each_frame = False
-
 # The frames of pluto which I want to see (it must be a list of integers)
-pluto_nframes = list(range(5,290,5))
-# z position of z-const lines (in cm)
-# Z lines settings, z lines always start from 0
-N_z_lines = 30
-z_lines_end = 0.5
+pluto_nframes = list(range(0,221,10))
 # Capillary radius
-r_cap = 0.5e-3
-zlim_plot = 0.5
-ne_lim_plot = 1.5e17
 average_ne = 'max'  # 'max','integral'
 reflect_lowz = True
 
@@ -60,23 +57,40 @@ if reflect_lowz:
 tt,zz = np.meshgrid(t,z)
 
 #%% Read picture
-import matplotlib.image as mpimg
-filippi = mpimg.imread('/home/ema/screenshots/filippi.png')
-fig, ax = plt.subplots()
-ax.imshow(filippi,
-          extent=[-1.5, 1.5,1250.,150.],  # extent=[left,right,bottom,top],
-          aspect='auto',
-          origin='upper'
-            )
+gs = gridspec.GridSpec(1, 3,
+                       width_ratios=[28, 28, 2],
+                       # height_ratios=[1, 1]
+                       )
+fig = plt.figure(figsize=(4,3))
+ax_sim  = plt.subplot(gs[0,0])
+ax_meas = plt.subplot(gs[0,1])
+ax_cb = plt.subplot(gs[0,2])
 
-# <codecell> Plots
-fig, ax = plt.subplots()
-
-mp = ax.pcolormesh(zz, tt, ne_avg_r_cc.T,
+filippi = mpimg.imread(measurement)
+# fig, ax = plt.subplots(ncols=2)
+ax_meas.imshow(filippi,
+             extent=[-1.5, 1.5,1250.,150.],  # extent=[left,right,bottom,top],
+             aspect='auto',
+             origin='upper'
+             )
+ax_meas.set_yticks([],[])
+mp = ax_sim.pcolormesh(zz, tt, ne_avg_r_cc.T,
                    cmap='jet',
                    vmax=1.5e17,
                    vmin=0.0)
-ax.invert_yaxis()
-ax.set_xlim([-1.5,1.5])
-ax.set_ylim([1250., 150.])
-fig.colorbar(mp)
+
+ax_sim.invert_yaxis()
+ax_sim.set_xlim([-1.5,1.5])
+ax_sim.set_ylim([1250., 150.])
+xticks = [-1.5,0.,1.5]
+ax_meas.set_xticks(xticks)
+ax_sim.set_xticks(xticks)
+
+ax_sim.set_ylabel('Time (s)')
+ax_sim.set_xlabel('Longitudinal position (mm)')
+ax_sim.set_xlabel('Longitudinal position (mm)')
+ax_sim.set_title('Simulation')
+ax_meas.set_title('Measurement')
+
+fig.colorbar(mp, cax = ax_cb)
+fig.tight_layout()
