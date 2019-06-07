@@ -9,38 +9,28 @@ importlib.reload(prf)
 # plt.ion()
 
 # <codecell>
-# Options
-# sim = '/home/ema/simulazioni/sims_pluto/dens_real/1e5Pa'
-# sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa'
-# sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-rhounif-I90-3.2cm'
-sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-1.2cm'
+# Settings
+paper_emulate = 'Pompili2017'
 
-# legend = '1.e5Pa'
-legend = '1.3e5Pa'
-
-plot_ne_map_each_frame = False
-
-# The frames of pluto which I want to see (it must be a list of integers, with
-# dimension : len(all_sims)*(number of frames you want to watch in every simulation))
-# fastest varying index: frames for the same simulation, slower running index: simulation
-# pluto_nframes = [80, 160, 200]
-# pluto_nframes = [-10+20*ii for ii in range(1,15)]
-# pluto_nframes = [24, 50, 74, 100, 120, 150]
-pluto_nframes = [24, 50, 74, 100, 120, 132, 150]
-# z position of z-const lines (in cm)
-# Z lines settings, z lines always start from 0
-N_z_lines = 30
-z_lines_end = 0.5
-# Capillary radius
-r_cap = 0.5e-3
-# Capillary length, half of the real one
-l_cap = 0.5e-2
-
-show_legend = True
-
-reflect_lowz = True
-zlim_plot = 0.5
-ne_lim_plot = 1.5e17
+if paper_emulate=='Pompili2017':
+    pluto_nframes = [130]
+    # Capillary radius
+    r_cap = 0.5e-3
+    # Capillary length, half of the real one
+    l_cap = 1.5e-2
+    sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho4.5e-7-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
+elif paper_emulate==None:
+    # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1e5Pa'
+    # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa'
+    # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-rhounif-I90-3.2cm'
+    sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-1.2cm'
+    B_measured = np.loadtxt('/home/ema/Dottorato/dati_sperimentali_e_calcoli/Tabulazione_esperimAPL/ArticoloPompili2017/extracted_data/B.dat')
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho4.5e-7-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
+    # Capillary length, half of the real one
+    l_cap = 1.5e-3
+    # Capillary radius
+    r_cap = 0.5e-3
+    pluto_nframes = [100,130]
 
 # <codecell> Load the data
 B = []
@@ -55,9 +45,9 @@ for ii in range(len(pluto_nframes)):
                                                     # time=125.0,
                                                     nframe=pluto_nframes[ii])
     times.append(t)
-    # Convert r and z to cm
-    r /= 1e3
-    z /= 1e3
+    # Convert r and z to m
+    r /= 1e5
+    z /= 1e5
     r_sims.append(r)
     z_sims.append(z)
     B.append(q["bx3"])
@@ -76,13 +66,17 @@ for ii in range(len(pluto_nframes)):
 fig_avg, ax_avg = plt.subplots()
 
 for ii in range(len(pluto_nframes)):
-    ax_avg.plot(0.5*(r[:-1]+r[1:]), B_avg_z[ii],
-                '.-', label=legend+',t={}'.format(times[ii]))
-if show_legend:
-    ax_avg.legend()
-ax_avg.set_xlim([0.,r_cap/1e-2])
-ax_avg.set_ylabel('$B / \mathrm{g}$ (longitudinal average)')
-ax_avg.set_xlabel('$r / \mathrm{cm}$')
+    ax_avg.plot(0.5*(r[:-1]+r[1:])*1e6, B_avg_z[ii],
+                '.-',
+                label='simulated',
+                )
+# ax_avg.plot(B_measured[:,0], ,'.-')
+
+ax_avg.legend()
+ax_avg.set_title('t = {} ns'.format(times[ii]))
+ax_avg.set_xlim([0.,r_cap*1e6])
+ax_avg.set_ylabel('Mag. field, longitudinal average (T)')
+ax_avg.set_xlabel('r (μm)')
 ax_avg.grid()
 
 plt.show()

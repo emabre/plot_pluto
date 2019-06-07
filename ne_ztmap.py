@@ -22,11 +22,12 @@ importlib.reload(apl)
 # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-rhounif-I90-3.2cm'
 # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-1.2cm'
 # measurement = 'file:///home/ema/Dottorato/dati_sperimentali_e_calcoli/misure_ne_da_confrontare/misure_capillare_1cmL-1mmD/stessa_scala_temporale/ne_I245_t50-1450ns_z0-10mm_cmapjet0-15e16_CUT.png'
-measurement = '/home/ema/Dottorato/dati_sperimentali_e_calcoli/misure_ne_da_confrontare/misure_capillare_1cmL-1mmD/stessa_scala_temporale/ne_I245_t50-1450ns_z0-10mm_cmapjet0-15e16_CUT_rotated.png'
+# measurement = '/home/ema/Dottorato/dati_sperimentali_e_calcoli/misure_ne_da_confrontare/misure_capillare_1cmL-1mmD/stessa_scala_temporale/ne_I245_t50-1450ns_z0-10mm_cmapjet0-15e16_CUT_rotated.png'
 
 # ---
 # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-8-I90-3.2cmL-1mmD'
-sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
+# sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
+sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho3.5e-7-I90-3.2cmL-1mmD-r60-NTOT8-diffRecPeriod8'
 # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho4.5e-7-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
 # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I90-3.2cmL-1mmD'
 # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I235-3.2cmL-1mmD-r15'
@@ -35,7 +36,7 @@ measurement = '/home/ema/Dottorato/dati_sperimentali_e_calcoli/misure_ne_da_conf
 # ---
 
 # The frames of pluto which I want to see (it must be a list of integers)
-pluto_nframes = list(range(0,221,10))
+pluto_nframes = list(range(0,151,5))
 # Capillary radius
 average_ne = 'max'  # 'max','integral'
 reflect_lowz = True
