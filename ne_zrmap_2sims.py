@@ -25,7 +25,8 @@ sim = ['/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I500flattop-1.2cmL-1
        '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I720flattop-1.2cmL-1.2mmD'
        ]
 pluto_nframe = 40
-l_cap = 1.2e-2  # m
+# Capillary length, half of the real one (including electrodes)
+l_cap = 0.6e-2  # m
 r_cap = (0.5e-3, 0.6e-3)  # m
 dz_cap = 1.e-3
 
@@ -93,14 +94,14 @@ cbar.set_ticklabels(['$<10^8$', '$10^{10}$', '$10^{12}$', '$10^{14}$', '$10^{16}
 # ----
 # Draw electrodes and capillary walls
 # Locations of lower left corners of electrodes z(m),r(m) (one for each sim)
-electrode_zr_ll = (((l_cap-2*dz_cap)/2*1e2, r_cap[0]*1e6),  # sim 0
-                   ((l_cap-2*dz_cap)/2*1e2, r_cap[1]*1e6))  # sim 1
+electrode_zr_ll = (((l_cap-dz_cap)*1e2, r_cap[0]*1e6),  # sim 0
+                   ((l_cap-dz_cap)*1e2, r_cap[1]*1e6))  # sim 1
 wall_zr_ll = ((0, r_cap[0]*1e6),  # sim 0
               (0, r_cap[1]*1e6))  # sim 1
 
 electrodes = [Rectangle((electrode_zr_ll[ss][0], electrode_zr_ll[ss][1]), dz_cap*1e2, r[ss].max()*1e6,
                         fill=True, facecolor='#a3552c', edgecolor='k' ) for ss in (0,1)]
-walls = [Rectangle((wall_zr_ll[ss][0], wall_zr_ll[ss][1]), (l_cap-2*dz_cap)/2*1e2, r[ss].max()*1e6,
+walls = [Rectangle((wall_zr_ll[ss][0], wall_zr_ll[ss][1]), (l_cap-dz_cap)*1e2, r[ss].max()*1e6,
                         fill=True, facecolor='gray', edgecolor='k' ) for ss in (0,1)]
 for ss in (0,1):
     ax[ss].add_patch(electrodes[ss])
