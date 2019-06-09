@@ -4,6 +4,7 @@ import importlib
 import os
 import pluto_read_frm as prf
 import utilities as ut
+from scipy import constants as cst
 
 #plt.close("all")
 importlib.reload(prf)
@@ -20,6 +21,9 @@ pluto_nframes = [24]  # 10
 l_cap = 0.6e-2  # m
 r_cap = (0.5e-3, 0.6e-3)  # m
 dz_cap = 0.1e-2  # m
+# Static B as in Bobrova model
+B_staticBob = np.loadtxt('/home/ema/myprogr/scarica_a_regime/B_adimensional.dat')
+plot_staticBob = True
 
 # <codecell> Load the data
 B = []
@@ -78,45 +82,62 @@ for ss in range(len(sims)):
         B_avg_z[ss][ii] = np.concatenate(([0.], B_avg_z[ss][ii]), axis=0)
         r_cc[ss][ii] = np.concatenate(([0.], r_cc[ss][ii]), axis=0)
 
+# Plot equilibrium model field
+scale_factors = [1.08, 1.08]
+if plot_staticBob:
+    color_Bob = 'darkorange'
+    linestyle_Bob = '-'
+    for ss in range(len(sims)):
+        for ii in range(len(pluto_nframes)):
+            # Get I by interpolation on the current table
+            t_I, I = ut.get_currtab(sims[ss])
+            t0_ns = t_I[np.max(np.argwhere(t_I*1e9-times[ss]<0))]*1e9
+            I0_A = I[np.max(np.argwhere(t_I*1e9-times[ss]<0))]
+            t1_ns = t_I[np.min(np.argwhere(t_I*1e9-times[ss]>0))]*1e9
+            I1_A = I[np.min(np.argwhere(t_I*1e9-times[ss]>0))]
+            Inow_A = I0_A + (I1_A-I0_A)/(t1_ns-t0_ns)*(times[ss][ii]-t0_ns)
+            Bwall_T = cst.mu_0*Inow_A/(2*np.pi*r_cap[ss])
+
+            ax_avg.plot(B_staticBob[:,0]*r_cap[ss]*1e6/B_staticBob[-1,0],
+                        B_staticBob[:,1]*Bwall_T*1e3/B_staticBob[-1,1] *scale_factors[ss],
+                        linestyle = linestyle_Bob,
+                        linewidth = 2.3,
+                        # marker = '^',
+                        # markersize = 2.,
+                        # markevery = 5,
+                        color=color_Bob,
+                        # label='Equil. model',
+                        )
+
+
 linestyles = ['-','--']
-colors = [['red', 'darkred'], ['royalblue','navy']]
+# colors = [['red', 'darkred'], ['royalblue','navy']]
 
 for ss in range(len(sims)):
     for ii in range(len(pluto_nframes)):
         ax_avg.plot(r_cc[ss][ii][r_cc[ss][ii]<=r_cap[ss]]*1e6,
                     B_avg_z[ss][ii][r_cc[ss][ii]<=r_cap[ss]]*1e3,
                     linestyle = linestyles[ss],
-                    color=colors[ii][ss],
+                    linewidth = 0.9,
+                    color='k',
                     # label='t={:.0f}ns, R={:.0f}μm'.format(times[ss][ii], r_cap[ss]*1e6),
                     )
-
+# Set legend
 import matplotlib.lines as mlines
 handles=[]
 for ss in range(len(sims)):
     handles.append(mlines.Line2D([], [], color='k', linestyle=linestyles[ss],  # , marker='*', markersize=15,
                    label='R={:.0f}μm'.format(r_cap[ss]*1e6)))
-
+if plot_staticBob:
+    handles.append(mlines.Line2D([], [], color=color_Bob, linestyle=linestyle_Bob,  # , marker='*', markersize=15,
+                   label='Equil. model'))
 ax_avg.legend(handles=handles)
 
-text_x_positions = [0.4, 0.6]
-for ii in range(len(pluto_nframes)):
-    fig_avg.text(text_x_positions[ii], 0.9, "t={:.0f}ns".format(times[0][ii]), ha="center", va="bottom", size="medium",color=colors[ii][1])
-fig_avg.text(0.48, 0.9, ';', ha="center", va="bottom", size="medium")
+# Set title
+ax_avg.set_title("t={:.0f}ns".format(times[0][ii]))
+# Set line to separate end of one capillary
 for cc in range(len(r_cap)):
     ax_avg.axvline(x=r_cap[cc]*1e6, color='k', linestyle='-', lw=1.)
-# ax_avg.set_title('t={}'.format())
-
-# Plot equilibrium model field
-# if plot_staticBob:
-#     ax_avg.plot(B_staticBob[:,0]*r_cap*1e6/B_staticBob[-1,0],
-#                 B_staticBob[:,1]*B_measured[-1,1]/B_staticBob[-1,1],
-#                 '-',
-#                 color='darkorange',
-#                 label='Equil. model')
-
-# ax_avg.legend(framealpha = 0.4)
-# ax_avg.set_title('t = {}ns, I = {:g}A'.format(times[ii],
-#                                             np.interp(times[ii]*1e-9, *ut.get_currtab(sim))))
 
 # fig_avg.text(0.65, 0.8, "t={:.0f}ns,".format(times[ii][0]), ha="center", va="bottom", size="medium",color="navy")
 ax_avg.set_xlim([0., max(r_cap)*1e6])
