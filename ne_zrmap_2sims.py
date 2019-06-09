@@ -45,35 +45,51 @@ for ss in range(len(sim)):
 
 #%%
 # Interpolate with nearest the border points
+
 r_cc = [0.5*(r[ss][1:]+r[ss][:-1]) for ss in (0,1)]
 z_cc = [0.5*(z[ss][1:]+z[ss][:-1]) for ss in (0,1)]
 
-rr_cc = [[],[]]; zz_cc = [[],[]]
-for ss in (0,1):
-    rr_cc[ss], zz_cc[ss] = np.meshgrid(r_cc[ss], z_cc[ss])
+# fig, ax = plt.subplots(nrows=2)
 
-points = [[],[]]; ne_cc = [[],[]]
-for ss in (0,1):
-    for ii in range(len(r_cc[ss])):
-        for jj in range(len(z_cc[ss])):
-            # points.append([rr_cc[ss], zz_cc[ss]])
-            points[ss].append([z_cc[ss][jj], r_cc[ss][ii]])
-            ne_cc[ss].append(ne[ss][jj,ii])
-ne_cc = [np.array(ne_cc[ss]) for ss in range(len(ne_cc))]
-points = [np.array(points[ss]) for ss in range(len(points))]
+#%% Plotting
 
+gs = gridspec.GridSpec(2, 2,
+                       width_ratios=[30, 2],
+                       height_ratios=[1, 1]
+                       )
 
-zz = [[],[]]; rr = [[],[]]
-for ss in (0,1):
-    zz[ss], rr[ss] = np.meshgrid(z[ss],r[ss])
+fig = plt.figure(figsize=(5.5,4.5))
+ax = [[],[]]
+ax[0] = plt.subplot(gs[0,0])
+ax[1] = plt.subplot(gs[1,0])
+ax_cb = plt.subplot(gs[:,1])
 
-# vertex centered ne
-ne_vc = [griddata(points[0], ne_cc[0],
-                  np.stack((zz[ss].flatten(), rr[ss].flatten()), axis=1),
-                  method='linear') for ss in (0,1)]
-ne_vc = [np.reshape(ne_vc[ss], (len(z[ss]),len(r[ss]))) for ss in (0,1)]
-
-
-fig, ax = plt.subplots()
 ss = 0
-ax.contourf(r[0], z[0], ne_vc[0])
+ax[0].contourf(z_cc[0]*1e2, r_cc[0]*1e6, ne[0].T,
+            levels=100,
+            cmap = 'inferno')
+mp = ax[1].contourf(z_cc[1]*1e2, r_cc[1]*1e6, ne[1].T,
+                    levels=100,
+                    cmap = 'inferno')
+
+# ax[0].set_xticks([])
+
+ax[1].set_ylim(0., 2e3)
+ax[0].set_ylim(0.,2e3)
+for ss in (0,1):
+    ax[ss].set_xlim(0.01,1.6)
+ax[1].set_xlabel('z (cm)')
+ax[0].set_ylabel('r (μm)')
+ax[1].set_ylabel('r (μm)')
+
+fig.colorbar(mp, cax = ax_cb, label='Electron density $(\mathrm{cm}^{-3})$')
+fig.tight_layout()
+# rr = [[],[]]
+# zz = [[],[]]
+# for ss in (0,1):
+#     rr[ss], zz[ss] = np.meshgrid(r[ss], z[ss])
+#
+# fig, ax = plt.subplots()
+# ss = 0
+# ax.pcolormesh(rr[0], zz[0], ne_cc[0])
+# ax.pcolormesh(rr[0], zz[0], ne[0])
