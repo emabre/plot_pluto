@@ -9,6 +9,8 @@ import utilities as ut
 import active_plasma_lens as apl
 import matplotlib.image as mpimg
 from scipy.interpolate import griddata
+import matplotlib.colors as colors
+from matplotlib import ticker
 
 #plt.close("all")
 importlib.reload(prf)
@@ -44,15 +46,11 @@ for ss in range(len(sim)):
     z[ss] /= 1e5
 
 #%%
-# Interpolate with nearest the border points
-
+# Compute the cell centers
 r_cc = [0.5*(r[ss][1:]+r[ss][:-1]) for ss in (0,1)]
 z_cc = [0.5*(z[ss][1:]+z[ss][:-1]) for ss in (0,1)]
 
-# fig, ax = plt.subplots(nrows=2)
-
 #%% Plotting
-
 gs = gridspec.GridSpec(2, 2,
                        width_ratios=[30, 2],
                        height_ratios=[1, 1]
@@ -65,12 +63,23 @@ ax[1] = plt.subplot(gs[1,0])
 ax_cb = plt.subplot(gs[:,1])
 
 ss = 0
-ax[0].contourf(z_cc[0]*1e2, r_cc[0]*1e6, ne[0].T,
-            levels=100,
-            cmap = 'inferno')
-mp = ax[1].contourf(z_cc[1]*1e2, r_cc[1]*1e6, ne[1].T,
-                    levels=100,
-                    cmap = 'inferno')
+vmin = 1e10
+vmax = 1e17
+
+ne_logmin = 8
+ne_logmax = 18
+ne_plot = ne.copy()
+for ss in (1,0):
+    ne_plot[ss][ne_plot[ss]<1e8] = 1e8
+for ss in (0,1):
+    mp = ax[ss].contourf(z_cc[ss]*1e2, r_cc[ss]*1e6,
+                         np.log10(ne[ss].T+vmin*1e-3),
+                         levels=np.linspace(ne_logmin, ne_logmax, 150),
+                         # locator=ticker.LogLocator(),
+                         # norm = colors.LogNorm(vmin=vmin, vmax=vmax),
+                         vmin = ne_logmin,
+                         vmax = ne_logmax,
+                         cmap = 'inferno')
 
 # ax[0].set_xticks([])
 
@@ -82,7 +91,12 @@ ax[1].set_xlabel('z (cm)')
 ax[0].set_ylabel('r (μm)')
 ax[1].set_ylabel('r (μm)')
 
-fig.colorbar(mp, cax = ax_cb, label='Electron density $(\mathrm{cm}^{-3})$')
+cbar = fig.colorbar(mp, cax = ax_cb,
+             label='Electron density $(\mathrm{cm}^{-3})$',
+             ticks = [8,10,12,14,16,18])
+cbar.set_ticklabels(['$<10^8$', '$10^{10}$', '$10^{12}$', '$10^{14}$', '$10^{16}$', '$10^{18}$'])
+
+ax[0].set_title('time: {:g}ns'.format(t[0]))
 fig.tight_layout()
 # rr = [[],[]]
 # zz = [[],[]]
