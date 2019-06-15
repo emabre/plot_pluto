@@ -34,6 +34,8 @@ if setting_case == 'compare-1mmD-1.2mmD':
     dz_cap = 1.e-3  # m
     rmax = 1e-3  # m
     zmax = 7e-2  # m
+    reverse_sign_B = False
+
 elif setting_case == 'compare-pI500-mI500':
     sim = ['/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-mI550-3.2cmL-1mmD-r60-NTOT20-diffRecPeriod10-NB20/',
            '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I550-3.2cmL-1mmD-r60-NTOT32-diffRecPeriod8/'
@@ -45,11 +47,12 @@ elif setting_case == 'compare-pI500-mI500':
     dz_cap = 1.e-3  # m
     rmax = 0.8e-3  # m
     zmax = 2.e-2  # m
+    reverse_sign_B = True
 
 #%% Load the data
 if len(sim)!=2:
     raise ValueError('sim must be a list of two(2) simulation paths')
-T = [[], []]
+B = [[], []]
 r = [[],[]]
 z = [[],[]]
 t = [[],[]]
@@ -58,10 +61,16 @@ for ss in range(len(sim)):
     q, r[ss], z[ss], theta, t[ss], n = prf.pluto_read_vtk_frame(pluto_dir,
                                                                 # time=125.0,
                                                                 nframe=pluto_nframe)
-    T[ss] = q["T"]
+    B[ss] = q["bx3"]
     # Convert r and z to m
     r[ss] /= 1e5
     z[ss] /= 1e5
+
+if reverse_sign_B:
+    if np.mean(B[1])<0:
+        B[1] = -B[1]
+    else:
+        B[0] = -B[0]
 
 #%%
 # Compute the cell centers
@@ -79,26 +88,19 @@ ax = [[],[]]
 ax[0] = plt.subplot(gs[0,0])
 ax[1] = plt.subplot(gs[1,0])
 ax_cb = plt.subplot(gs[:,1])
-if pluto_nframe==10:
-    Tmin = 2.5e3
-    Tmax = 40e3
-else:
-    Tmin = 2.5e3
-    Tmax = 80e3
-for ss in (0,1):
-    T[ss][T[ss]<2.5e3] = 2.5e3
+Bmin = 0.
+Bmax = 250.
 for ss in (0,1):
     mp = ax[ss].contourf(z_cc[ss]*1e2, r_cc[ss]*1e6,
-                         T[ss].T,
-                         levels = np.linspace(Tmin,Tmax,101),
+                         B[ss].T/10,  # convert to mT
+                         levels = np.linspace(Bmin,Bmax,101),
                          # levels = 100,
-                         # levels=np.linspace(Tmin, Tmax, 150),
                          # locator=ticker.LogLocator(),
                          # norm = colors.LogNorm(vmin=vmin, vmax=vmax),
                          # vmin = Tmin,
                          # vmax = Tmin,
                          # cmap = 'hot',
-                         cmap = 'gist_heat',
+                         cmap = 'bone' # 'pink_r',  # 'bone_r',# 'gist_yarg',# 'Purples_r',
                          )
 for ss in (0,1):
     ax[ss].set_ylim(0., rmax*1e6)
@@ -108,8 +110,8 @@ ax[0].set_ylabel('r (μm)')
 ax[1].set_ylabel('r (μm)')
 
 cbar = fig.colorbar(mp, cax = ax_cb,
-                    label='Temperature (K)',
-                    ticks = [2500, 2e4, 4e4, 6e4, 8e4],
+                    label='Magnetic field (mT)',
+                    ticks = [0, 50, 100, 150,200,250],
                     )
 # cbar.set_ticklabels(['$<10^8$', '$10^{10}$', '$10^{12}$', '$10^{14}$', '$10^{16}$', '$10^{18}$'])
 

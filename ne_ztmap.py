@@ -19,33 +19,51 @@ importlib.reload(apl)
 # Settings
 
 # Allowed choices are '245A-1cm' and '90A-3cm'
-measure_choice = '245A-1cm'
-average_ne = 'integral'  # 'max','integral'
+measure_choice = '245A-1cm'  # '90A-3cm' or '245A-1cm'
+average_ne = 'max'  # 'max','integral'
 # This is just for the title label
-rho0 = 3.5e-7   # Initial mass density imposed in simulation
+rho0 = 3.1e-7   # Initial mass density imposed in simulation
 
 if measure_choice=='245A-1cm':
     # ----
     # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1e5Pa'
     # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1e4Pa-06012019/'
     # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa'
-    sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-1.2cm'
+    # sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-1.2cm'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho1.5e-7-I245-1.2cmL-1mmD-NEWGRID'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho3.5e-7-I245-1.2cmL-1mmD-NEWGRID/'
+
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho6e-7-I245-1.2cmL-1mmD-NEWGRID'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I245-1.2cmL-1mmD-NEWGRID'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho1e-6-I245-1.2cmL-1mmD-NEWGRID'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho1.5e-6-I245-1.2cmL-1mmD-NEWGRID'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho1.75e-6-I245-1.2cmL-1mmD-NEWGRID'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2e-6-I245-1.2cmL-1mmD-NEWGRID'
+
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho3.3e-7-I245-1.2cmL-1mmD-NEWGRID'
+    sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho3.1e-7-I245-1.2cmL-1mmD-NEWGRID'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho4e-6-I245-1.2cmL-1mmD-NEWGRID'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I245-1.2cmL-1mmD-NEWGRID/'
     measurement = '/home/ema/Dottorato/dati_sperimentali_e_calcoli/misure_ne_da_confrontare/misure_capillare_1cmL-1mmD/stessa_scala_temporale/ne_I245_t50-1450ns_z0-10mm_cmapjet0-15e16_CUT_rotated.png'
-    pluto_nframes =list(range(0,261,5))
+    pluto_nframes =list(range(0,150,5))
     l_cap = 1e-2
+    extent_measure = [50., 1450., -l_cap/2*1e2, +l_cap/2*1e2]
 elif measure_choice=='90A-3cm':
     # ---
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-8-I90-3.2cmL-1mmD'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
-    sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho3.5e-7-I90-3.2cmL-1mmD-r60-NTOT8-diffRecPeriod8-fast'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho3.5e-7-I90-3.2cmL-1mmD-r60-NTOT8-diffRecPeriod8-fast'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/100mbarOK-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
+    sim = '/home/ema/simulazioni/sims_pluto/perTesi/300mbarOK-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho4.5e-7-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I90-3.2cmL-1mmD'
     measurement = '/home/ema/Dottorato/dati_sperimentali_e_calcoli/misure_ne_da_confrontare/misure_capillare_3cmL-1mmD/stessa_scala_temporale/densità_elettronica/ne_I90_t150-1250ns_z0-30mm_cmapjet0-15e16_CUT_rotated.png'
     # ---
     # The frames of pluto which I want to see (it must be a list of integers)
-    pluto_nframes =list(range(0,261,5))
+    pluto_nframes =list(range(0,145,5))
     # Capillary radius (m)
     l_cap = 3e-2
+    extent_measure = [150., 1250., -l_cap/2*1e2, +l_cap/2*1e2]  # ns, ns, cm, cm
 else:
     raise ValueError('Unrecognized measure choice')
 
@@ -78,7 +96,7 @@ ax_cb = plt.subplot(gs[:,1])
 filippi = mpimg.imread(measurement)
 # fig, ax = plt.subplots(ncols=2)
 ax_meas.imshow(filippi,
-             extent=[150., 1250., -l_cap/2*1e2, +l_cap/2*1e2],  # extent=[left,right,bottom,top],
+             extent=extent_measure,  # extent=[left,right,bottom,top],
              aspect='auto',
              origin='upper'
              )
@@ -88,11 +106,12 @@ mp = ax_sim.pcolormesh(tt, zz, ne_avg_r_cc.T,
                    vmin=0.0)
 
 # ax_sim.invert_yaxis()
-ax_sim.set_ylim([-l_cap/2*1e2, l_cap/2*1e2])
-ax_sim.set_xlim([150., 1250])
-yticks = [-l_cap/2*1e2, 0., l_cap/2*1e2]
+ax_sim.set_ylim([extent_measure[2], extent_measure[3]])
+ax_sim.set_xlim([extent_measure[0], extent_measure[1]])
+yticks = [extent_measure[2], 0., extent_measure[3]]
 ax_meas.set_yticks(yticks)
 ax_sim.set_yticks(yticks)
+# ax_sim.set_xticks()
 # ax_meas.set_xticks(ax_sim.get_xticks())
 # ax_meas.set_xticklabels([])
 
@@ -101,7 +120,9 @@ ax_sim.set_ylabel('z (cm)')
 ax_meas.set_ylabel('z (cm)')
 if average_ne == 'max':
     title = 'Simulation, '+r'$\mathrm{max}_r (n_e) $, '+r'$\rho_0= {:g}'.format(rho0/1e-7)+r'\cdot 10^{-7}$ g/cm³'
+    # title = 'Simulation, '+r'$\mathrm{max}_r (n_e) $, '+'300mbar'
 elif average_ne == 'integral':
+    # title = 'Simulation, '+r'$\langle n_e \rangle_r$, '+'300mbar'
     title = 'Simulation, '+r'$\langle n_e \rangle_r$, '+r'$\rho_0= {:g}'.format(rho0/1e-7)+r'\cdot 10^{-7}$ g/cm³'
 ax_sim.set_title(title)
 ax_meas.set_title('Measurement')

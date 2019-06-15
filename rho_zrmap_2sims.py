@@ -27,13 +27,13 @@ if setting_case == 'compare-1mmD-1.2mmD':
     sim = ['/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I500flattop-1.2cmL-1mmD',
            '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I720flattop-1.2cmL-1.2mmD'
            ]
-    pluto_nframe = 20  # 10
     # Capillary length, half of the real one (including electrodes)
     l_cap = 0.6e-2  # m
     r_cap = (0.5e-3, 0.6e-3)  # m
     dz_cap = 1.e-3  # m
-    rmax = 1e-3  # m
-    zmax = 7e-2  # m
+    rmax = 2e-3  # m
+    zmax = 2.8e-2  # m
+
 elif setting_case == 'compare-pI500-mI500':
     sim = ['/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-mI550-3.2cmL-1mmD-r60-NTOT20-diffRecPeriod10-NB20/',
            '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I550-3.2cmL-1mmD-r60-NTOT32-diffRecPeriod8/'
@@ -43,13 +43,13 @@ elif setting_case == 'compare-pI500-mI500':
     l_cap = 1.6e-2  # m
     r_cap = (0.5e-3, 0.5e-3)  # m
     dz_cap = 1.e-3  # m
-    rmax = 0.8e-3  # m
-    zmax = 2.e-2  # m
+    rmax = 2.e-3  # m
+    zmax = 2.8e-2  # m
 
 #%% Load the data
 if len(sim)!=2:
     raise ValueError('sim must be a list of two(2) simulation paths')
-T = [[], []]
+rho = [[], []]
 r = [[],[]]
 z = [[],[]]
 t = [[],[]]
@@ -58,7 +58,7 @@ for ss in range(len(sim)):
     q, r[ss], z[ss], theta, t[ss], n = prf.pluto_read_vtk_frame(pluto_dir,
                                                                 # time=125.0,
                                                                 nframe=pluto_nframe)
-    T[ss] = q["T"]
+    rho[ss] = q["rho"]
     # Convert r and z to m
     r[ss] /= 1e5
     z[ss] /= 1e5
@@ -79,27 +79,18 @@ ax = [[],[]]
 ax[0] = plt.subplot(gs[0,0])
 ax[1] = plt.subplot(gs[1,0])
 ax_cb = plt.subplot(gs[:,1])
-if pluto_nframe==10:
-    Tmin = 2.5e3
-    Tmax = 40e3
-else:
-    Tmin = 2.5e3
-    Tmax = 80e3
+rho_logmin = -9
+rho_logmax = -6
 for ss in (0,1):
-    T[ss][T[ss]<2.5e3] = 2.5e3
+    rho[ss][rho[ss] < 10**rho_logmin] = 10**rho_logmin
 for ss in (0,1):
     mp = ax[ss].contourf(z_cc[ss]*1e2, r_cc[ss]*1e6,
-                         T[ss].T,
-                         levels = np.linspace(Tmin,Tmax,101),
-                         # levels = 100,
-                         # levels=np.linspace(Tmin, Tmax, 150),
+                         # rho[ss].T,
+                         np.log10(rho[ss].T),
+                         levels=np.linspace(rho_logmin, rho_logmax, 150),
                          # locator=ticker.LogLocator(),
                          # norm = colors.LogNorm(vmin=vmin, vmax=vmax),
-                         # vmin = Tmin,
-                         # vmax = Tmin,
-                         # cmap = 'hot',
-                         cmap = 'gist_heat',
-                         )
+                         cmap = 'pink')
 for ss in (0,1):
     ax[ss].set_ylim(0., rmax*1e6)
     ax[ss].set_xlim(0.01, zmax*1e2)
@@ -107,10 +98,11 @@ ax[1].set_xlabel('z (cm)')
 ax[0].set_ylabel('r (μm)')
 ax[1].set_ylabel('r (μm)')
 
+ticks = list(range(rho_logmin, rho_logmax+1, 1))
 cbar = fig.colorbar(mp, cax = ax_cb,
-                    label='Temperature (K)',
-                    ticks = [2500, 2e4, 4e4, 6e4, 8e4],
-                    )
+             label='Mass density $(\mathrm{g} / \mathrm{cm}^{-3})$',
+             ticks = ticks)
+cbar.set_ticklabels(['$<10^{{{}}}$'.format(ticks[0])] + ['$10^{{{}}}$'.format(ticks[ii]) for ii in range(1,len(ticks))])
 # cbar.set_ticklabels(['$<10^8$', '$10^{10}$', '$10^{12}$', '$10^{14}$', '$10^{16}$', '$10^{18}$'])
 
 # ----
@@ -135,6 +127,18 @@ for ss in (0,1):
 
 # ----
 for ss in (0,1):
-    ax[ss].set_title('time: {:.0f}ns, diameter:{:g}mm'.format(t[0], r_cap[ss]*2*1e3))
+    if setting_case == 'compare-1mmD-1.2mmD':
+        ax[ss].set_title('time: {:g}ns, diameter:{:g}mm'.format(t[0], r_cap[ss]*2*1e3))
+    else:
+        ax[ss].set_title('time: {:g}ns'.format(t[0]))
 fig.tight_layout()
 plt.show()
+# rr = [[],[]]
+# zz = [[],[]]
+# for ss in (0,1):
+#     rr[ss], zz[ss] = np.meshgrid(r[ss], z[ss])
+#
+# fig, ax = plt.subplots()
+# ss = 0
+# ax.pcolormesh(rr[0], zz[0], ne_cc[0])
+# ax.pcolormesh(rr[0], zz[0], ne[0])

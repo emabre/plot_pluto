@@ -7,7 +7,7 @@ import os
 #%% Settings
 
 # Allowed choices are '245A-1cm' and '90A-3cm'
-measure_choice = '245A-1cm'  # '90A-3cm' or '245A-1cm'
+measure_choice = '90A-3cm'  # '90A-3cm' or '245A-1cm'
 
 # Imposed current
 if measure_choice=='245A-1cm':
@@ -19,7 +19,14 @@ if measure_choice=='245A-1cm':
                                   'stessa_scala_temporale',
                                   'corrente',
                                   'Current_ASCII.txt')
+    disch_data  = os.path.join(os.path.expandvars('$DOTTORATO'),
+                                  'dati_sperimentali_e_calcoli',
+                                  'densita_neutri_simulata',
+                                  '17122018',
+                                  'C1 Discharge1MOhmFORMA.txt')
+    header_rows = 5
     Imax = 250.
+    curr_conv_factor = 40
 elif measure_choice=='90A-3cm':
     # Measured current
     # sim = '$TORRE/home/konrad/simulazioni/sims_pluto/I90/newtransp'
@@ -30,7 +37,9 @@ elif measure_choice=='90A-3cm':
                                  'stessa_scala_temporale',
                                  'corrente',
                                  'Current_ASCII.txt')
+    header_rows = 1
     Imax = 100.
+    curr_conv_factor = 1
 # Only times higher than t_start_s (seconds) will be plotted of the measured data
 t_start_s = 0.  # -30e-9
 # Only times lower than t_end_s (seconds) will be ploted of the measured data
@@ -43,9 +52,9 @@ t_max = 2e-6
 
 #%% Load data
 # measured data
-disch = np.loadtxt(disch_data, skiprows=1)
+disch = np.loadtxt(disch_data, skiprows=header_rows)
 t = disch[:,0]
-I = disch[:,1]
+I = disch[:,1]*curr_conv_factor
 # simlation data
 current_finame = 'current_table.dat'
 curr_fi = os.path.join(os.path.expandvars(sim),current_finame)
