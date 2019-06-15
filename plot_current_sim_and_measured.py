@@ -5,23 +5,32 @@ import os
 
 
 #%% Settings
+
+# Allowed choices are '245A-1cm' and '90A-3cm'
+measure_choice = '245A-1cm'  # '90A-3cm' or '245A-1cm'
+
 # Imposed current
-# sim = '$TORRE/home/konrad/simulazioni/sims_pluto/I90/newtransp'
-# sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-8-I235-3.2cmL-1mmD'
-sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-6-I90-3.2cmL-1mmD'
-# Measured current
-disch_data  = os.path.join(os.path.expandvars('$DOTTORATO'),
-                             'dati_sperimentali_e_calcoli',
-                             'misure_capillare_3cmL-1mmD',
-                             'stessa_scala_temporale',
-                             'corrente',
-                             'Current_ASCII.txt')
-# disch_data  = os.path.join(os.path.expandvars('$DOTTORATO'),
-#                               'dati_sperimentali_e_calcoli',
-#                               'misure_capillare_1cmL-1mmD',
-#                               'stessa_scala_temporale',
-#                               'corrente',
-#                               'Current_ASCII.txt')
+if measure_choice=='245A-1cm':
+    sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho6e-7-I245-1.2cmL-1mmD-NEWGRID'
+    # Measured current
+    disch_data  = os.path.join(os.path.expandvars('$DOTTORATO'),
+                                  'dati_sperimentali_e_calcoli',
+                                  'misure_capillare_1cmL-1mmD',
+                                  'stessa_scala_temporale',
+                                  'corrente',
+                                  'Current_ASCII.txt')
+    Imax = 250.
+elif measure_choice=='90A-3cm':
+    # Measured current
+    # sim = '$TORRE/home/konrad/simulazioni/sims_pluto/I90/newtransp'
+    sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-6-I90-3.2cmL-1mmD'
+    disch_data  = os.path.join(os.path.expandvars('$DOTTORATO'),
+                                 'dati_sperimentali_e_calcoli',
+                                 'misure_capillare_3cmL-1mmD',
+                                 'stessa_scala_temporale',
+                                 'corrente',
+                                 'Current_ASCII.txt')
+    Imax = 100.
 # Only times higher than t_start_s (seconds) will be plotted of the measured data
 t_start_s = 0.  # -30e-9
 # Only times lower than t_end_s (seconds) will be ploted of the measured data
@@ -52,7 +61,7 @@ ax.plot(t[(t>t_start_s) & (t<t_end_s)][::nskip]*1e9,
         label='Measured')
 ax.plot(t_sim*1e9, I_sim, '--', color='k',
         label='Set in sim.')
-ax.set_ylim([0.,100.])
+ax.set_ylim([0.,Imax])
 ax.set_xlim([t_min*1e9, t_max*1e9])
 ax.legend()
 
