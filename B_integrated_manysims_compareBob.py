@@ -16,7 +16,7 @@ importlib.reload(prf)
 sims = ['/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I500flattop-1.2cmL-1mmD',
        '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I720flattop-1.2cmL-1.2mmD'
        ]
-pluto_nframes = [24]  # 10
+pluto_nframes = [20]  # 10
 # Capillary length, half of the real one, including electrodes
 l_cap = 0.6e-2  # m
 r_cap = (0.5e-3, 0.6e-3)  # m

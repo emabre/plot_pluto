@@ -20,7 +20,7 @@ importlib.reload(apl)
 # <codecell>
 # Settings
 # Available: 'compare-1mmD-1.2mmD', 'compare-pI500-mI500'
-setting_case = 'compare-pI500-mI500'
+setting_case = 'compare-1mmD-1.2mmD'
 
 # ----
 if setting_case == 'compare-1mmD-1.2mmD':
@@ -32,7 +32,10 @@ if setting_case == 'compare-1mmD-1.2mmD':
     r_cap = (0.5e-3, 0.6e-3)  # m
     dz_cap = 1.e-3  # m
     rmax = 2e-3  # m
-    zmax = 2.8e-2  # m
+    zmax = 1.4e-2  # m
+    pluto_nframe = 0
+    # Scale choice: 'lin' or 'log'
+    scale = 'lin'
 
 elif setting_case == 'compare-pI500-mI500':
     sim = ['/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-mI550-3.2cmL-1mmD-r60-NTOT20-diffRecPeriod10-NB20/',
@@ -45,6 +48,8 @@ elif setting_case == 'compare-pI500-mI500':
     dz_cap = 1.e-3  # m
     rmax = 2.e-3  # m
     zmax = 2.8e-2  # m
+    # Scale choice: 'lin' or 'log'
+    scale = 'log'
 
 #%% Load the data
 if len(sim)!=2:
@@ -79,31 +84,56 @@ ax = [[],[]]
 ax[0] = plt.subplot(gs[0,0])
 ax[1] = plt.subplot(gs[1,0])
 ax_cb = plt.subplot(gs[:,1])
-rho_logmin = -9
-rho_logmax = -6
+if scale=='log':
+    rho_logmin = -9
+    rho_logmax = -6
+    for ss in (0,1):
+        rho[ss][rho[ss] < 10**rho_logmin] = 10**rho_logmin
+        mp = ax[ss].contourf(z_cc[ss]*1e2, r_cc[ss]*1e6,
+                             # rho[ss].T,
+                             np.log10(rho[ss].T),
+                             levels=np.linspace(rho_logmin, rho_logmax, 150),
+                             # locator=ticker.LogLocator(),
+                             # norm = colors.LogNorm(vmin=vmin, vmax=vmax),
+                             cmap = 'pink')
+elif scale=='lin':
+    rho_min = 2.5e-10
+    rho_max = 2.5e-7
+    for ss in (0,1):
+        rho[ss][rho[ss] < rho_min] = rho_min
+        mp = ax[ss].contourf(z_cc[ss]*1e2, r_cc[ss]*1e6,
+                             # rho[ss].T,
+                             rho[ss].T,
+                             levels = np.linspace(0, rho_max, 151),
+                             # vmin = rho_min,
+                             # vmax = rho_max,
+                             # norm = colors.LogNorm(vmin=vmin, vmax=vmax),
+                             cmap = 'pink')
+else:
+    raise ValueError('Wrong setting for scale')
+
+if scale=='log':
+    ticks = list(range(rho_logmin, rho_logmax+1, 1))
+    cbar = fig.colorbar(mp, cax = ax_cb,
+                 label='Mass density $(\mathrm{g} / \mathrm{cm}^{-3})$',
+                 ticks = ticks)
+    cbar.set_ticklabels(['$<10^{{{}}}$'.format(ticks[0])] + ['$10^{{{}}}$'.format(ticks[ii]) for ii in range(1,len(ticks))])
+elif scale=='lin':
+    ticks = [2.5e-10, 0.5e-7, 1.e-7, 1.5e-7, 2.e-7, 2.5e-7]
+    cbar = fig.colorbar(mp, cax = ax_cb,
+                        label='Mass density $(\mathrm{g} / \mathrm{cm}^{-3})$',
+                        ticks = ticks,
+                        )
+    # cbar.set_ticklabels(['$<10^{{{}}}$'.format(ticks[0])] + ['$10^{{{}}}$'.format(ticks[ii]) for ii in range(1,len(ticks))])
+
+#---
+# Labels and lims
 for ss in (0,1):
-    rho[ss][rho[ss] < 10**rho_logmin] = 10**rho_logmin
-for ss in (0,1):
-    mp = ax[ss].contourf(z_cc[ss]*1e2, r_cc[ss]*1e6,
-                         # rho[ss].T,
-                         np.log10(rho[ss].T),
-                         levels=np.linspace(rho_logmin, rho_logmax, 150),
-                         # locator=ticker.LogLocator(),
-                         # norm = colors.LogNorm(vmin=vmin, vmax=vmax),
-                         cmap = 'pink')
-for ss in (0,1):
-    ax[ss].set_ylim(0., rmax*1e6)
-    ax[ss].set_xlim(0.01, zmax*1e2)
+    ax[ss].set_ylim(0.01, rmax*1e6)
+    ax[ss].set_xlim(0., zmax*1e2)
 ax[1].set_xlabel('z (cm)')
 ax[0].set_ylabel('r (μm)')
 ax[1].set_ylabel('r (μm)')
-
-ticks = list(range(rho_logmin, rho_logmax+1, 1))
-cbar = fig.colorbar(mp, cax = ax_cb,
-             label='Mass density $(\mathrm{g} / \mathrm{cm}^{-3})$',
-             ticks = ticks)
-cbar.set_ticklabels(['$<10^{{{}}}$'.format(ticks[0])] + ['$10^{{{}}}$'.format(ticks[ii]) for ii in range(1,len(ticks))])
-# cbar.set_ticklabels(['$<10^8$', '$10^{10}$', '$10^{12}$', '$10^{14}$', '$10^{16}$', '$10^{18}$'])
 
 # ----
 # Draw electrodes and capillary walls
@@ -126,10 +156,13 @@ for ss in (0,1):
 # ax[0].add_collection(el_coll)
 
 # ----
-for ss in (0,1):
-    if setting_case == 'compare-1mmD-1.2mmD':
-        ax[ss].set_title('time: {:g}ns, diameter:{:g}mm'.format(t[0], r_cap[ss]*2*1e3))
-    else:
+
+if setting_case == 'compare-1mmD-1.2mmD':
+    case = ('(a)', '(b)')
+    for ss in (0,1):
+        ax[ss].set_title('{:s}, t={:g}ns, R={:g}μm'.format(case[ss], t[0], r_cap[ss]*1e6))
+else:
+    for ss in (0,1):
         ax[ss].set_title('time: {:g}ns'.format(t[0]))
 fig.tight_layout()
 plt.show()

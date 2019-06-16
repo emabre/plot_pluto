@@ -41,7 +41,8 @@ if measure_choice=='245A-1cm':
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2e-6-I245-1.2cmL-1mmD-NEWGRID'
 
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho3.3e-7-I245-1.2cmL-1mmD-NEWGRID'
-    sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho3.1e-7-I245-1.2cmL-1mmD-NEWGRID'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho3.1e-7-I245-1.2cmL-1mmD-NEWGRID'
+    sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.9e-7-I245-1.2cmL-1mmD-NEWGRID'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho4e-6-I245-1.2cmL-1mmD-NEWGRID'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I245-1.2cmL-1mmD-NEWGRID/'
     measurement = '/home/ema/Dottorato/dati_sperimentali_e_calcoli/misure_ne_da_confrontare/misure_capillare_1cmL-1mmD/stessa_scala_temporale/ne_I245_t50-1450ns_z0-10mm_cmapjet0-15e16_CUT_rotated.png'
@@ -54,13 +55,14 @@ elif measure_choice=='90A-3cm':
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho3.5e-7-I90-3.2cmL-1mmD-r60-NTOT8-diffRecPeriod8-fast'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/100mbarOK-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
-    sim = '/home/ema/simulazioni/sims_pluto/perTesi/300mbarOK-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/300mbarOK-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
+    sim = '/home/ema/simulazioni/sims_pluto/perTesi/200mbarOKselfmade-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho4.5e-7-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I90-3.2cmL-1mmD'
     measurement = '/home/ema/Dottorato/dati_sperimentali_e_calcoli/misure_ne_da_confrontare/misure_capillare_3cmL-1mmD/stessa_scala_temporale/densità_elettronica/ne_I90_t150-1250ns_z0-30mm_cmapjet0-15e16_CUT_rotated.png'
     # ---
     # The frames of pluto which I want to see (it must be a list of integers)
-    pluto_nframes =list(range(0,145,5))
+    pluto_nframes =list(range(0,81,5))
     # Capillary radius (m)
     l_cap = 3e-2
     extent_measure = [150., 1250., -l_cap/2*1e2, +l_cap/2*1e2]  # ns, ns, cm, cm
