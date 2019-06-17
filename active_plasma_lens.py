@@ -143,7 +143,7 @@ def ne_avg_over_r(sim, pluto_nframes, average_ne, z_lines=None, ret_z_cell_borde
             # note that ne is defined inside the cell (it's an average value)
             # so I may imagine that it is constant inside the cell
             idx_z = np.argmax(z[z<=z_line])
-            if average_ne == 'integral':
+            if average_ne == 'integral' or average_ne == 'mean' :
                 # Build capillary shape (False where there is wall, True elsewere)
                 cap = (q['interBound']==0e0)
                 areas = []
