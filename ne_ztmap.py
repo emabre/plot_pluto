@@ -19,10 +19,10 @@ importlib.reload(apl)
 # Settings
 
 # Allowed choices are '245A-1cm' and '90A-3cm'
-measure_choice = '245A-1cm'  # '90A-3cm' or '245A-1cm'
+measure_choice = '90A-3cm'  # '90A-3cm' or '245A-1cm'
 average_ne = 'max'  # 'max','integral'
 # This is just for the title label
-rho0 = 3.1e-7   # Initial mass density imposed in simulation
+rho0 = 3.7e-7   # Initial mass density imposed in simulation
 
 if measure_choice=='245A-1cm':
     # ----
@@ -33,7 +33,7 @@ if measure_choice=='245A-1cm':
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho1.5e-7-I245-1.2cmL-1mmD-NEWGRID'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho3.5e-7-I245-1.2cmL-1mmD-NEWGRID/'
 
-    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho6e-7-I245-1.2cmL-1mmD-NEWGRID'
+    sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho6e-7-I245-1.2cmL-1mmD-NEWGRID'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I245-1.2cmL-1mmD-NEWGRID'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho1e-6-I245-1.2cmL-1mmD-NEWGRID'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho1.5e-6-I245-1.2cmL-1mmD-NEWGRID'
@@ -42,30 +42,33 @@ if measure_choice=='245A-1cm':
 
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho3.3e-7-I245-1.2cmL-1mmD-NEWGRID'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho3.1e-7-I245-1.2cmL-1mmD-NEWGRID'
-    sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.9e-7-I245-1.2cmL-1mmD-NEWGRID'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.9e-7-I245-1.2cmL-1mmD-NEWGRID'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho4e-6-I245-1.2cmL-1mmD-NEWGRID'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I245-1.2cmL-1mmD-NEWGRID/'
     measurement = '/home/ema/Dottorato/dati_sperimentali_e_calcoli/misure_ne_da_confrontare/misure_capillare_1cmL-1mmD/stessa_scala_temporale/ne_I245_t50-1450ns_z0-10mm_cmapjet0-15e16_CUT_rotated.png'
-    pluto_nframes =list(range(0,150,5))
+    pluto_nframes =list(range(0,256,5))
     l_cap = 1e-2
     extent_measure = [50., 1450., -l_cap/2*1e2, +l_cap/2*1e2]
+    t_max = 1250.  # ns
 elif measure_choice=='90A-3cm':
     # ---
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-8-I90-3.2cmL-1mmD'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho3.5e-7-I90-3.2cmL-1mmD-r60-NTOT8-diffRecPeriod8-fast'
+    sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho3.7e-7-I90-3.2cmL-1mmD-r60-NTOT8-diffRecPeriod8-fast'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/100mbarOK-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/300mbarOK-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
-    sim = '/home/ema/simulazioni/sims_pluto/perTesi/200mbarOKselfmade-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/200mbarOKselfmade-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho4.5e-7-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I90-3.2cmL-1mmD'
     measurement = '/home/ema/Dottorato/dati_sperimentali_e_calcoli/misure_ne_da_confrontare/misure_capillare_3cmL-1mmD/stessa_scala_temporale/densità_elettronica/ne_I90_t150-1250ns_z0-30mm_cmapjet0-15e16_CUT_rotated.png'
     # ---
     # The frames of pluto which I want to see (it must be a list of integers)
-    pluto_nframes =list(range(0,81,5))
+    pluto_nframes =list(range(0,251,5))
     # Capillary radius (m)
     l_cap = 3e-2
     extent_measure = [150., 1250., -l_cap/2*1e2, +l_cap/2*1e2]  # ns, ns, cm, cm
+    t_max = 1250.  # ns
 else:
     raise ValueError('Unrecognized measure choice')
 
@@ -92,7 +95,7 @@ gs = gridspec.GridSpec(2, 2,
                        )
 fig = plt.figure(figsize=(5.5,4.5))
 ax_sim  = plt.subplot(gs[1,0])
-ax_meas = plt.subplot(gs[0,0])
+ax_meas = plt.subplot(gs[0,0], sharex = ax_sim)
 ax_cb = plt.subplot(gs[:,1])
 
 filippi = mpimg.imread(measurement)
@@ -109,7 +112,7 @@ mp = ax_sim.pcolormesh(tt, zz, ne_avg_r_cc.T,
 
 # ax_sim.invert_yaxis()
 ax_sim.set_ylim([extent_measure[2], extent_measure[3]])
-ax_sim.set_xlim([extent_measure[0], extent_measure[1]])
+ax_sim.set_xlim([extent_measure[0], min(extent_measure[1],t_max)])
 yticks = [extent_measure[2], 0., extent_measure[3]]
 ax_meas.set_yticks(yticks)
 ax_sim.set_yticks(yticks)
