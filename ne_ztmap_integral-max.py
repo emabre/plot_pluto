@@ -19,7 +19,7 @@ importlib.reload(apl)
 # Settings
 
 # Allowed choices are '245A-1cm' and '90A-3cm'
-measure_choice = '90A-3cm'  # '90A-3cm' or '245A-1cm'
+measure_choice = '245A-1cm'  # '90A-3cm' or '245A-1cm'
 
 if measure_choice=='245A-1cm':
     sim = {'mean': '/home/ema/simulazioni/sims_pluto/perTesi/rho6e-7-I245-1.2cmL-1mmD-NEWGRID',
@@ -97,9 +97,11 @@ for ii in range(len(average_ne)):
     ax_sim[ii].set_ylim([extent_measure[2], extent_measure[3]])
     ax_sim[ii].set_xlim([extent_measure[0], min(extent_measure[1],t_max)])
     ax_sim[ii].set_yticks(yticks)
+    if measure_choice=='245A-1cm':
+        ax_sim[ii].set_xticks([100, 200, 400, 600, 800, 1200])
 ax_meas.set_yticks(yticks)
 
-# ax_sim.set_xticks()
+
 # ax_meas.set_xticks(ax_sim.get_xticks())
 # ax_meas.set_xticklabels([])
 

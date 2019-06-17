@@ -19,8 +19,8 @@ importlib.reload(apl)
 
 # <codecell>
 # Settings
-# Available: 'compare-1mmD-1.2mmD', 'compare-pI500-mI500'
-setting_case = 'compare-1mmD-1.2mmD'
+# Available: 'compare-1mmD-1.2mmD', 'compare-pI500-mI500', 'compare-1cmL-3cmL'
+setting_case = 'compare-1cmL-3cmL'
 
 # ----
 if setting_case == 'compare-1mmD-1.2mmD':
@@ -34,7 +34,7 @@ if setting_case == 'compare-1mmD-1.2mmD':
     rmax = 2e-3  # m
     zmax = 1.4e-2  # m
     pluto_nframe = 0
-    # Scale choice: 'lin' or 'log'
+    # Scale choice: 'lin' or 'log' or 'lin_symb'
     scale = 'lin'
 
 elif setting_case == 'compare-pI500-mI500':
@@ -48,8 +48,22 @@ elif setting_case == 'compare-pI500-mI500':
     dz_cap = 1.e-3  # m
     rmax = 2.e-3  # m
     zmax = 2.8e-2  # m
-    # Scale choice: 'lin' or 'log'
+    # Scale choice: 'lin' or 'log' or 'lin_symb'
     scale = 'log'
+
+elif setting_case == 'compare-1cmL-3cmL':
+    sim = ['/home/ema/simulazioni/sims_pluto/perTesi/rho3.7e-7-I90-3.2cmL-1mmD-r60-NTOT8-diffRecPeriod8-fast',
+           '/home/ema/simulazioni/sims_pluto/perTesi/rho2.9e-7-I245-1.2cmL-1mmD-NEWGRID',
+           ]
+    pluto_nframe = 0  # 10
+    # Capillary length, half of the real one (including electrodes)
+    l_cap = (1.6e-2, 0.6e-2)  # m
+    r_cap = (0.5e-3, 0.5e-3)  # m
+    dz_cap = 1.e-3  # m
+    rmax = 2.e-3  # m
+    zmax = 2.5e-2  # m
+    # Scale choice: 'lin' or 'log' or 'lin_symb'
+    scale = 'lin_symb'
 
 #%% Load the data
 if len(sim)!=2:
@@ -109,6 +123,28 @@ elif scale=='lin':
                              # vmax = rho_max,
                              # norm = colors.LogNorm(vmin=vmin, vmax=vmax),
                              cmap = 'pink')
+elif scale=='lin_symb':
+    rho_min = rho[ss].min()
+    rho_max = rho[ss].max()
+    mp = ax[1].contourf(z_cc[0]*1e2, r_cc[0]*1e6,
+                         # rho[ss].T,
+                         rho_min*np.ones(np.shape(rho[0].T)),
+                         levels = np.linspace(rho_min, rho_max, 151),
+                         vmin = rho_min,
+                         vmax = rho_max,
+                         # norm = colors.LogNorm(vmin=vmin, vmax=vmax),
+                         cmap = 'pink')
+    for ss in (0,1):
+        rho[ss][rho[ss] < rho_min] = rho_min
+        mp = ax[ss].contourf(z_cc[ss]*1e2, r_cc[ss]*1e6,
+                             # rho[ss].T,
+                             rho[ss].T,
+                             levels = np.linspace(rho_min, rho_max, 151),
+                             vmin = rho_min,
+                             vmax = rho_max,
+                             # norm = colors.LogNorm(vmin=vmin, vmax=vmax),
+                             cmap = 'pink')
+
 else:
     raise ValueError('Wrong setting for scale')
 
@@ -124,12 +160,21 @@ elif scale=='lin':
                         label='Mass density $(\mathrm{g} / \mathrm{cm}^{-3})$',
                         ticks = ticks,
                         )
-    # cbar.set_ticklabels(['$<10^{{{}}}$'.format(ticks[0])] + ['$10^{{{}}}$'.format(ticks[ii]) for ii in range(1,len(ticks))])
+elif scale=='lin_symb':
+    cbar = fig.colorbar(mp, cax = ax_cb,
+                        label='Mass density $(\mathrm{g} / \mathrm{cm}^{-3})$',
+                        ticks = [rho_min,
+                                 # 0.5*rho_max,
+                                 rho_max]
+                        )
+    cbar.set_ticklabels([r'$\rho_\mathrm{V}$',
+                          # r'$\frac{\rho_0}{2}$',
+                          r'$\rho_0$'])
 
 #---
 # Labels and lims
 for ss in (0,1):
-    ax[ss].set_ylim(0.01, rmax*1e6)
+    ax[ss].set_ylim(0.03, rmax*1e6)
     ax[ss].set_xlim(0., zmax*1e2)
 ax[1].set_xlabel('z (cm)')
 ax[0].set_ylabel('r (μm)')
@@ -138,14 +183,14 @@ ax[1].set_ylabel('r (μm)')
 # ----
 # Draw electrodes and capillary walls
 # Locations of lower left corners of electrodes z(m),r(m) (one for each sim)
-electrode_zr_ll = (((l_cap-dz_cap)*1e2, r_cap[0]*1e6),  # sim 0
-                   ((l_cap-dz_cap)*1e2, r_cap[1]*1e6))  # sim 1
+electrode_zr_ll = (((l_cap[0]-dz_cap)*1e2, r_cap[0]*1e6),  # sim 0
+                   ((l_cap[1]-dz_cap)*1e2, r_cap[1]*1e6))  # sim 1
 wall_zr_ll = ((0, r_cap[0]*1e6),  # sim 0
               (0, r_cap[1]*1e6))  # sim 1
 
 electrodes = [Rectangle((electrode_zr_ll[ss][0], electrode_zr_ll[ss][1]), dz_cap*1e2, r[ss].max()*1e6,
                         fill=True, facecolor='#a3552c', edgecolor='k' ) for ss in (0,1)]
-walls = [Rectangle((wall_zr_ll[ss][0], wall_zr_ll[ss][1]), (l_cap-dz_cap)*1e2, r[ss].max()*1e6,
+walls = [Rectangle((wall_zr_ll[ss][0], wall_zr_ll[ss][1]), (l_cap[ss]-dz_cap)*1e2, r[ss].max()*1e6,
                         fill=True, facecolor='gray', edgecolor='k' ) for ss in (0,1)]
 for ss in (0,1):
     ax[ss].add_patch(electrodes[ss])
@@ -156,14 +201,13 @@ for ss in (0,1):
 # ax[0].add_collection(el_coll)
 
 # ----
-
+case = ('(a)', '(b)')
 if setting_case == 'compare-1mmD-1.2mmD':
-    case = ('(a)', '(b)')
     for ss in (0,1):
         ax[ss].set_title('{:s}, t={:g}ns, R={:g}μm'.format(case[ss], t[0], r_cap[ss]*1e6))
 else:
     for ss in (0,1):
-        ax[ss].set_title('time: {:g}ns'.format(t[0]))
+        ax[ss].set_title('{:s}, t={:g}ns'.format(case[ss], t[0]))
 fig.tight_layout()
 plt.show()
 # rr = [[],[]]
