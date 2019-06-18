@@ -57,7 +57,7 @@ z_cc = 0.5*(z[1:]+z[:-1])
 
 #%% Plotting
 gs = gridspec.GridSpec(6, 3,
-                       width_ratios=[30, 2, 2],
+                       width_ratios=[25, 2, 2],
                        height_ratios=6*[1],
                        hspace = 0
                        )
@@ -88,9 +88,28 @@ mp_rho = ax[0].contourf(z_cc*1e2, r_cc*1e6,
 arr_color='cyan'
 step_r = 10
 step_z = 2
-Q = ax[0].quiver(z_cc[::step_z]*1e2, r_cc[::step_r]*1e6,
-                 vz.T[::step_r,::step_z],
-                 vr.T[::step_r,::step_z],
+
+def choose_for_desired_spacing(x, spacing):
+    x_spaced_idxs = [0]
+    for ii in range(1,len(x)):
+        if x[ii] - x[x_spaced_idxs[-1]] >= spacing:
+            x_spaced_idxs.append(ii)
+    return x_spaced_idxs
+
+idxs_z = choose_for_desired_spacing(z_cc, 0.1e-2)
+idxs_r = choose_for_desired_spacing(r_cc, 0.007e-2)
+z_qv = z_cc[idxs_z]
+r_qv = r_cc[idxs_r]
+idx_product = np.array([[ii,jj] for ii in idxs_z for jj in idxs_r])
+vz_qv = vz[idxs_z, :]
+vz_qv = vz_qv[:, idxs_r]
+vr_qv = vr[idxs_z, :]
+vr_qv = vr_qv[:, idxs_r]
+# vr_qv = vz[idx_product[:,0], idx_product[:,1]]
+
+Q = ax[0].quiver(z_qv*1e2, r_qv*1e6,
+                 vz_qv.T,
+                 vr_qv.T,
                  scale_units='width',
                  scale=quiv_scale,
                  headwidth=3.8, width=0.005,
@@ -98,9 +117,19 @@ Q = ax[0].quiver(z_cc[::step_z]*1e2, r_cc[::step_r]*1e6,
                  # zorder = 20,
                  )
 
+# Q = ax[0].quiver(z_cc[::step_z]*1e2, r_cc[::step_r]*1e6,
+#                  vz.T[::step_r,::step_z],
+#                  vr.T[::step_r,::step_z],
+#                  scale_units='width',
+#                  scale=quiv_scale,
+#                  headwidth=3.8, width=0.005,
+#                  color=arr_color,
+#                  # zorder = 20,
+#                  )
+
 qk = ax[0].quiverkey(Q, 0.9, 0.25,
                    key_length,
-                   'Bulk \n velocity,\n{:2.0e} cm/s'.format(key_length),
+                   'Bulk \n velocity,\n{:2.0e} m/s'.format(key_length),
                    labelpos='N',
                    coordinates='figure',
                    color='k'
@@ -130,7 +159,7 @@ mp_B = ax[1].contour(z_cc*1e2, r_cc*1e6,
                      levels = 7,
                      cmap = 'ocean',
                      # colors='cyan',
-                     linewidths = 1.,
+                     linewidths = 1.7,
                     )
 
 ax[0].set_ylim(rmax*1e6*5e-3, rmax*1e6)
@@ -154,6 +183,8 @@ cbar_rho = fig.colorbar(mp_rho, cax = ax_cb[0],
                         # ticks = [2500, 2e4, 4e4, 6e4, 8e4],
                         # ticks = [2500, 1e4, 2e4, 3e4, 4e4],
                         )
+cbar_B = fig.colorbar(mp_B, cax = ax_cb[2],
+                      label='Magnetic field (mT)')
 # cbar.set_ticklabels(['$<10^8$', '$10^{10}$', '$10^{12}$', '$10^{14}$', '$10^{16}$', '$10^{18}$'])
 
 # ----
@@ -177,5 +208,5 @@ for ss in (0,1):
 # ----
 ax[0].set_title('t={:g}ns'.format(t))
 
-fig.tight_layout()
+# fig.tight_layout()
 plt.show()
