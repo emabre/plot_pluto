@@ -3,6 +3,7 @@ import importlib
 import os
 import pluto_read_frm as prf
 import utilities as ut
+import scipy.constants as cst
 
 
 importlib.reload(prf)
@@ -162,3 +163,39 @@ def ne_avg_over_r(sim, pluto_nframes, average_ne, z_lines=None, ret_z_cell_borde
         return z_lines, z, ne_avg_r_sims, times
     else:
         return z_lines, ne_avg_r_sims, times
+
+
+def focus_in_thin_apl(g, r_c, x, xp, y, l_cap, gamma, Dz):
+    ''' Focus a beam passing through an APL in thin lens approximation
+    '''
+    if len(x)!=len(y):
+        raise ValueError('x and y must have same length')
+    if len(r_c)!=len(g):
+        raise ValueError('r_c and g must have same length')
+
+    # Interpolate field gradient at the particle positions
+    g_real_interp = np.interp(np.sqrt(x**2+y**2),
+                              np.concatenate((np.flip(-r_c[1:], axis=0), r_c)),
+                              np.concatenate((np.flip(g[1:], axis=0), g)))
+
+    # Define focusing strength
+    k = cst.e/(cst.m_e*cst.c*gamma) * g_real_interp
+    K = k*l_cap
+
+    # Divergence increase in thin lens approx
+    Dxp = np.zeros(len(K))
+    xp_new = np.zeros(len(K))
+    Dxp = - K*x
+    xp_new = xp + Dxp
+
+    # New emittance after lens
+    emitt_x_new = np.zeros(len(xp_new))
+    emitt_x_new = emittance(x, xp_new)[0]
+
+    # New spot after drift Dz following lens
+    sigma_x_new = np.zeros(len(xp_new))
+    x_new = np.zeros(len(K))
+    x_new = x + Dz*(xp_new)
+    sigma_x_new = np.std(x_new)
+
+    return sigma_x_new, emitt_x_new, x_new, xp_new

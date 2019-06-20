@@ -111,40 +111,21 @@ Dxp_test = - K_test*x
 
 xp_new_test = xp+Dxp_test
 
-emitt_x_new_test, sigma_x_new_test, sigma_xp_new_test, cov_xxp_new_test   = apl.emittance(x, xp)
+emitt_x_new_test, sigma_x_new_test, sigma_xp_new_test, cov_xxp_new_test = apl.emittance(x, xp)
 emitt_Nx_test = gamma*emitt_x
 emitt_Nx_new_test = gamma*emitt_x_new_test
 
 #%% Particles pass in real APL
 times, r_c, g_real, Dg_real = apl.g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap)
-
 times = times*time_unit_pluto
 
-g_real_interp = np.zeros((len(x), g_real.shape[1]))
-for tt in range(g_real.shape[1]):
-    g_real_interp[:,tt] = np.interp(np.sqrt(x**2+y**2),
-                                    np.concatenate((np.flip(-r_c[1:], axis=0), r_c)),
-                                    np.concatenate((np.flip(g_real[1:,tt], axis=0), g_real[:,tt])))
-
-k = cst.e/(cst.m_e*cst.c*gamma) * g_real_interp
-K = k*l_cap
-Dxp = np.zeros(K.shape)
-xp_new = np.zeros(K.shape)
-for tt in range(K.shape[1]):
-    Dxp[:,tt] = - K[:,tt]*x
-    xp_new[:,tt] = xp + Dxp[:,tt]
-
-# New emittance after lens
-emitt_x_new = np.zeros(xp_new.shape[1])
-for tt in range(K.shape[1]):
-    emitt_x_new[tt] = apl.emittance(x, xp_new[:,tt])[0]
-
-# New spot after drift Dz following lens
-sigma_x_new = np.zeros(xp_new.shape[1])
-x_new = np.zeros(K.shape)
-for tt in range(K.shape[1]):
-    x_new[:,tt] = x + Dz*(xp_new[:,tt])
-    sigma_x_new[tt] = np.std(x_new[:,tt])
+sigma_x_new = [[]]*len(pluto_nframes); emitt_x_new = [[]]*len(pluto_nframes)
+x_new = [[]]*len(pluto_nframes); xp_new = [[]]*len(pluto_nframes)
+emitt_Nx_new = [[]]*len(pluto_nframes)
+for tt in range(len(pluto_nframes)):
+    sigma_x_new[tt], emitt_x_new[tt], x_new[tt], xp_new[tt] = apl.focus_in_thin_apl(g_real[:,tt], r_c, x, xp, y, l_cap, gamma, Dz)
+emitt_Nx_new = np.array(emitt_x_new)*gamma
+sigma_x_new = np.array(sigma_x_new)
 
 # Get current set in simulation
 t, I = ut.get_currtab(sim)
@@ -179,8 +160,6 @@ sigma_x_new_meas = convert_emitt_meas(sigma_x_new_meas, dt)
 sigma_y_new_meas = convert_emitt_meas(sigma_y_new_meas, dt)
 
 #I_apl = np.interp(times, t, I)
-
-emitt_Nx_new = emitt_x_new*gamma
 
 #%% Plot
 #plt.close('all')
