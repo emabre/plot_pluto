@@ -21,14 +21,15 @@ importlib.reload(apl)
 # Settings
 
 # ----
-sim = ['/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I500flattop-1.2cmL-1mmD',
-       '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I720flattop-1.2cmL-1.2mmD'
+sim = ['/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I500flattop-1.2cmL-1mmD-NEWGRID',
+       '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I720flattop-1.2cmL-1.2mmD-NEWGRID'
        ]
-pluto_nframe = 40
+pluto_nframe = 80
 # Capillary length, half of the real one (including electrodes)
 l_cap = 0.6e-2  # m
 r_cap = (0.5e-3, 0.6e-3)  # m
 dz_cap = 1.e-3
+name = ('(a)','(b)')
 
 #%% Load the data
 if len(sim)!=2:
@@ -70,6 +71,7 @@ ne_plot = ne.copy()
 for ss in (1,0):
     ne_plot[ss][ne_plot[ss]<1e8] = 1e8
 for ss in (0,1):
+    ax[ss].set_facecolor('k')
     mp = ax[ss].contourf(z_cc[ss]*1e2, r_cc[ss]*1e6,
                          np.log10(ne[ss].T),
                          levels=np.linspace(ne_logmin, ne_logmax, 150),
@@ -81,7 +83,7 @@ for ss in (0,1):
 ax[1].set_ylim(0., 2e3)
 ax[0].set_ylim(0.,2e3)
 for ss in (0,1):
-    ax[ss].set_xlim(0.01,1.8)
+    ax[ss].set_xlim(0.01,2.)
 ax[1].set_xlabel('z (cm)')
 ax[0].set_ylabel('r (μm)')
 ax[1].set_ylabel('r (μm)')
@@ -113,7 +115,7 @@ for ss in (0,1):
 
 # ----
 for ss in (0,1):
-    ax[ss].set_title('time: {:g}ns, diameter:{:g}mm'.format(t[0], r_cap[ss]*2*1e3))
+    ax[ss].set_title(name[ss]+', t={:g}ns'.format(t[0]))
 fig.tight_layout()
 plt.show()
 # rr = [[],[]]

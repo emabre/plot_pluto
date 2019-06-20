@@ -110,7 +110,7 @@ def g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap):
 
 def ne_avg_over_r(sim, pluto_nframes, average_ne, z_lines=None, ret_z_cell_borders=False):
     '''
-    Compute max electron density over the transverse section (r direction).
+    Compute max/integral-avg/axial electron density over the transverse section (r direction).
     return a vector of ne, the elements of ne correspond to different z positions
     Input:
         pluto_nframes : the frames of pluto which I want to see (it must be a list of integers)
@@ -153,6 +153,8 @@ def ne_avg_over_r(sim, pluto_nframes, average_ne, z_lines=None, ret_z_cell_borde
                 ne_avg_r.append(integ/area_r)
             elif average_ne == 'max':
                 ne_avg_r.append(q["ne"][idx_z,:].max())
+            elif average_ne == 'axis':
+                ne_avg_r.append(q["ne"][idx_z,0])
             else:
                 raise ValueError('Wrong choice for average_ne')
         ne_avg_r_sims.append(ne_avg_r)
