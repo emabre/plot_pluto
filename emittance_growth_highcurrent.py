@@ -33,14 +33,14 @@ time_unit_pluto = 1e-9  # unit time in pluto's simulation (in s)
 # ----- Beam -----
 # Normalized emittance (m*rad)
 if paper_emulate == 'Pompili2017beam-500A-720A':
-    emitt_Nx = 0.8e-6
-    emitt_Ny = 0.5e-6
-    energy_MeV = 127
+    emitt_Nx = 1.e-6
+    emitt_Ny = emitt_Nx
+    energy_MeV = 126
     # NB: l'aumento di emitt cambia molto al variare di d_sigma_x
     #sigma_x = 100.e-6
-    sigma_x = 110.e-6
+    sigma_x = 130.e-6
     sigma_y = sigma_x
-    d_sigma_x = -(113.-105.)/25.*1.e-4
+    d_sigma_x = -(130.-110.)/20.*1.e-4  # Circa... (vedi Fig 6b. sigma(z=9cm)=200um, sigma(z=11cm)=150um -> sigma'=Dsigma/Dz=25*10^-4)
     d_sigma_y = d_sigma_x
     # NB: l'aumento di emitt cambia poco al variare di d_sigma_x (varia anche se decommento qualche riga qui sotto)
     #d_sigma_x -= d_sigma_x*0.5
@@ -131,11 +131,11 @@ for ss in range(len(sim)):
                          # label = names[ss]+', current',
                          zorder=0)[0])
 
-emitt_base = ax_em_th.axhline(y=emitt_Nx*1e6, linestyle='--', lw=2,
-                               color='indigo',
-                               ls = ':',
-                               # label='no plasma, $\epsilon_N$',
-                               zorder=12)
+# emitt_base = ax_em_th.axhline(y=emitt_Nx*1e6, linestyle='--', lw=2,
+#                                color='k',
+#                                ls = ':',
+#                                # label='no plasma, $\epsilon_N$',
+#                                zorder=12)
 # ax_em_th.legend()
 
 
@@ -144,18 +144,17 @@ ax_I_th.set_zorder(ax_em_th.get_zorder()-1)
 ax_em_th.patch.set_visible(False)
 
 ax_em_th.set_ylabel('Emittance (mm mrad)')
-ax_em_th.set_ylim(bottom=0., top=2.5)
+ax_em_th.set_ylim(bottom=0., top=5.5)
 ax_em_th.set_xlim([0.,500])
 
-ax_em_th.legend(loc=1)
-ax_em_th.legend(curr + emitt_sim + [emitt_base],
+# ax_em_th.legend(curr + emitt_sim + [emitt_base],
+#                 [names[ss]+',current' for ss in range(len(sim))] + \
+#                 [names[ss]+',emittance' for ss in range(len(sim))] + \
+#                 ['no plasma, emittance'])
+ax_em_th.legend(curr + emitt_sim,
                 [names[ss]+',current' for ss in range(len(sim))] + \
-                [names[ss]+',$\epsilon_N$ simulated' for ss in range(len(sim))] + \
-                ['no plasma, $\epsilon_N$'])
-# ax_em_th.legend([curr, emitt_sim, emitt_base],
-#                 [name[ss]+',current',
-#                  name[ss]+',$\epsilon_N$ simulated' for ss in range(len(sim)),
-#                  'no plasma, $\epsilon_N$'])
+                [names[ss]+',emittance' for ss in range(len(sim))],
+                loc = 4)
 
 ax_em_th.set_xlabel('Time (ns)')
 ax_I_th.set_ylabel('Current (A)')
