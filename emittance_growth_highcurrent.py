@@ -11,10 +11,11 @@ from scipy.constants import mu_0
 import utilities as ut
 import active_plasma_lens as apl
 
-#plt.close("all")
 importlib.reload(prf)
 importlib.reload(ut)
 importlib.reload(apl)
+
+plt.close('all')
 
 # electron rest energy in MeV
 me_MeV = 0.511
@@ -26,7 +27,7 @@ paper_emulate = 'Pompili2017beam-500A-720A'
 # #sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-1.2cm'
 # ---
 
-pluto_nframes = [5,20,24]  # list(range(0,301,10))
+pluto_nframes = list(range(0,100,1))  # list(range(0,100,5))
 time_unit_pluto = 1e-9  # unit time in pluto's simulation (in s)
 
 # ----- Beam -----
@@ -49,6 +50,7 @@ if paper_emulate == 'Pompili2017beam-500A-720A':
     r_cap = (0.5e-3, 0.6e-3)  # m
     sim = ['/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I500flattop-1.2cmL-1mmD-NEWGRID',
            '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I720flattop-1.2cmL-1.2mmD-NEWGRID']
+    names = ['(a)', '(b)']
     Dz = 20e-2  # meters
 else :
     raise ValueError('Wrong choice for paper to emulate')
@@ -72,45 +74,29 @@ print('{} of {} beam particles are ouside capillary, I remove them.'.format(np.s
 # y = np.delete(y, idx_part_outside_cap)
 
 #%% Particles pass in real APL
-r_c = [[],[]]; times = [[],[]];
-g_real = [[],[]]; Dg_real = [[],[]]
+
+r_c = len(sim)*[None]; times = len(sim)*[None];
+g_real = len(sim)*[None]; Dg_real = len(sim)*[None];
+sigma_x_new = len(sim)*[None]; emitt_Nx_new = len(sim)*[None]
+emitt_x_new = len(sim)*[None]; x_new = len(sim)*[None]; xp_new = len(sim)*[None]
 for ss in range(len(sim)):
     times[ss], r_c[ss], g_real[ss], Dg_real[ss] = apl.g_Dg_time_evol(sim[ss], pluto_nframes, r_cap[ss], l_cap)
     times[ss] = times[ss]*time_unit_pluto
 
-k = []; K = []
-g_real_interp = [np.zeros((len(x), g_real[0].shape[1])),
-                 np.zeros((len(x), g_real[1].shape[1]))]
-xp_new = []; Dxp = []
-emitt_x_new = []; emitt_Nx_new = []
-sigma_x_new = []; x_new = []
-for ss in range(len(sim)):
-    for tt in range(g_real[ss].shape[1]):
-        g_real_interp[ss][:,tt] = np.interp(np.sqrt(x**2+y**2),
-                                            np.concatenate((np.flip(-r_c[ss][1:], axis=0), r_c[ss])),
-                                            np.concatenate((np.flip(g_real[ss][1:,tt], axis=0), g_real[ss][:,tt])))
+    # sigma_x_new.append([[]]*len(pluto_nframes))
+    # emitt_x_new.append([[]]*len(pluto_nframes))
+    # x_new.append([[]]*len(pluto_nframes))
+    # xp_new.append([[]]*len(pluto_nframes))
+    # Map over time
+    (sigma_x_new[ss],
+     emitt_x_new[ss],
+     x_new[ss],
+     xp_new[ss]) = zip(*(map(lambda v: apl.focus_in_thin_apl(v, r_c[ss], x, xp, y, l_cap, gamma, Dz),
+                             g_real[ss].T)))
+    emitt_Nx_new[ss] = np.array(emitt_x_new[ss])*gamma
+    sigma_x_new[ss] = np.array(sigma_x_new[ss])
 
-    k.append(cst.e/(cst.m_e*cst.c*gamma) * g_real_interp[ss])
-    K.append(k[ss]*l_cap)  # l_cap was used for averaging B (in apl.g_Dg_time_evol) so this is ok!
-    Dxp.append(np.zeros(K[ss].shape))
-    xp_new.append(np.zeros(K[ss].shape))
-    for tt in range(K[ss].shape[1]):
-        Dxp[ss][:,tt] = - K[ss][:,tt]*x
-        xp_new[ss][:,tt] = xp + Dxp[ss][:,tt]
-
-    # New emittance after lens
-    emitt_x_new.append(np.zeros(xp_new[ss].shape[1]))
-    for tt in range(K[ss].shape[1]):
-        emitt_x_new[ss][tt] = apl.emittance(x, xp_new[ss][:,tt])[0]
-    emitt_Nx_new.append(emitt_x_new[ss]*gamma)
-
-    # New spot after drift Dz following lens
-    sigma_x_new.append(np.zeros(xp_new[ss].shape[1]))
-    x_new.append(np.zeros(K[ss].shape))
-    for tt in range(K[ss].shape[1]):
-        x_new[ss][:,tt] = x + Dz*(xp_new[ss][:,tt])
-        sigma_x_new[ss][tt] = np.std(x_new[ss][:,tt])
-
+# da sistemare qui, non sono sicuro che in questo ciclo sopra sia tutto ok (forse problema con emitt_Nx_new o con times)
 # Get current set in simulation
 t = [[] for ss in range(len(sim))]
 I = [[] for ss in range(len(sim))]
@@ -119,42 +105,57 @@ for ss in range(len(sim)):
 
 #%% Plots
 # Trace space
-fig, ax = plt.subplots(nrows=2)
-ax[0].scatter(x,xp)
-ax[1].scatter(x_new,xp_new)
+# fig, ax = plt.subplots(nrows=2)
+# ax[0].scatter(x,xp)
+# ax[1].scatter(x_new,xp_new)
 
 #%% Plot for thesis
 # -------------------------------------------------------------------------
 # -------------------------------------------------------------------------
 # -------------------------------------------------------------------------
+linestyles = ('--', '-')
 # Emittance
 fig_I_th, ax_em_th = plt.subplots(figsize=(4.5,3.))
-
-emitt_sim, = ax_em_th.plot(times*1e9, emitt_Nx_new*1e6, color='purple',
-                          lw=2,
-                          # label='$\epsilon_N$ simulated',
-                          zorder=10)
+ax_I_th = ax_em_th.twinx()
+curr = []; emitt_sim = []
+for ss in range(len(sim)):
+    emitt_sim.append(ax_em_th.plot(times[ss]*1e9, emitt_Nx_new[ss]*1e6, color='purple',
+                              lw=2,
+                              ls = linestyles[ss],
+                              # label = names[ss] + ', $\epsilon_N$',
+                              zorder = 10)[0])
+    curr.append(ax_I_th.plot(t[ss]*1e9, I[ss],
+                         linestyles[ss],
+                         lw=3,
+                         c='darkgray',
+                         # label = names[ss]+', current',
+                         zorder=0)[0])
 
 emitt_base = ax_em_th.axhline(y=emitt_Nx*1e6, linestyle='--', lw=2,
-                               color='purple',
-                               # label='$\epsilon_N$ no plasma',
+                               color='indigo',
+                               ls = ':',
+                               # label='no plasma, $\epsilon_N$',
                                zorder=12)
+# ax_em_th.legend()
 
-ax_I_th = ax_em_th.twinx()
-curr, = ax_I_th.plot(t*1e9, I, '-', lw=3, c='darkgray', zorder=0)
-ax_I_th.set_ylim(bottom=0., top=100.)
+
+ax_I_th.set_ylim(bottom=0., top=800.)
 ax_I_th.set_zorder(ax_em_th.get_zorder()-1)
 ax_em_th.patch.set_visible(False)
 
 ax_em_th.set_ylabel('Emittance (mm mrad)')
-ax_em_th.set_ylim(bottom=0., top=14.)
-ax_em_th.set_xlim([0.,1200])
+ax_em_th.set_ylim(bottom=0., top=2.5)
+ax_em_th.set_xlim([0.,500])
 
-# ax_em_th.legend(loc=1)
-ax_em_th.legend([curr, emitt_base, emitt_sim],
-                ['Current',
-                 '$\epsilon_N$ no plasma',
-                 '$\epsilon_N$ simulated'])
+ax_em_th.legend(loc=1)
+ax_em_th.legend(curr + emitt_sim + [emitt_base],
+                [names[ss]+',current' for ss in range(len(sim))] + \
+                [names[ss]+',$\epsilon_N$ simulated' for ss in range(len(sim))] + \
+                ['no plasma, $\epsilon_N$'])
+# ax_em_th.legend([curr, emitt_sim, emitt_base],
+#                 [name[ss]+',current',
+#                  name[ss]+',$\epsilon_N$ simulated' for ss in range(len(sim)),
+#                  'no plasma, $\epsilon_N$'])
 
 ax_em_th.set_xlabel('Time (ns)')
 ax_I_th.set_ylabel('Current (A)')
@@ -166,21 +167,22 @@ plt.tight_layout()
 # -------------------------------------------------------------------------
 # Spot
 fig_I_th, ax_sp_th = plt.subplots(figsize=(4.5,3.))
-
-spot_sim, = ax_sp_th.plot(times*1e9, sigma_x_new*1e6,
-                          color='purple',
-                          lw=2,
-                          # label='$\epsilon_N$ simulated',
-                          zorder=10)
-
 ax_I_th_sp = ax_sp_th.twinx()
-curr, = ax_I_th_sp.plot(t*1e9, I, '-', lw=3, c='darkgray', zorder=0)
-ax_I_th_sp.set_ylim(bottom=0., top=100.)
+# Plot spot
+for ss in range(len(sim)):
+    spot_sim, = ax_sp_th.plot(times[ss]*1e9, sigma_x_new[ss]*1e6,
+                              color='purple',
+                              lw=2,
+                              # label='$\epsilon_N$ simulated',
+                              zorder=10)
+
+    curr, = ax_I_th_sp.plot(t[ss]*1e9, I[ss], '-', lw=3, c='darkgray', zorder=0)
+# ax_I_th_sp.set_ylim(bottom=0., top=100.)
 ax_I_th_sp.set_zorder(ax_sp_th.get_zorder()-1)
 ax_sp_th.patch.set_visible(False)
 
 ax_sp_th.set_ylabel('Spot rms (μm)')
-ax_sp_th.set_xlim([0.,1200])
+ax_sp_th.set_xlim([0.,500])
 
 # ax_sp_th.legend(loc=1)
 ax_sp_th.legend([curr, spot_sim],

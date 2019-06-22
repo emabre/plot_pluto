@@ -121,7 +121,6 @@ times = times*time_unit_pluto
 
 sigma_x_new = [[]]*len(pluto_nframes); emitt_x_new = [[]]*len(pluto_nframes)
 x_new = [[]]*len(pluto_nframes); xp_new = [[]]*len(pluto_nframes)
-emitt_Nx_new = [[]]*len(pluto_nframes)
 for tt in range(len(pluto_nframes)):
     sigma_x_new[tt], emitt_x_new[tt], x_new[tt], xp_new[tt] = apl.focus_in_thin_apl(g_real[:,tt], r_c, x, xp, y, l_cap, gamma, Dz)
 emitt_Nx_new = np.array(emitt_x_new)*gamma

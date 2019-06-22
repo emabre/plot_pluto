@@ -166,7 +166,20 @@ def ne_avg_over_r(sim, pluto_nframes, average_ne, z_lines=None, ret_z_cell_borde
 
 
 def focus_in_thin_apl(g, r_c, x, xp, y, l_cap, gamma, Dz):
-    ''' Focus a beam passing through an APL in thin lens approximation
+    '''
+    Focus a beam passing through an APL in thin lens approximation.
+    g: mag field gradient (B/R, Tesla/m) (1D array like)
+    r_c: radial points where g is defined (m) (1D array like)
+    x: transverse beam particle positions (m) (1D array like)
+    xp: angular divergence of beam particles (m) (1D array like)
+    l_cap: capillary length (m)
+    gamma: beam relativistic gamma
+    Dz: drift after lens (m)
+    Returns
+    sigma_x_new,
+    emitt_x_new, (non normalized emittance after lens)
+    x_new,
+    xp_new
     '''
     if len(x)!=len(y):
         raise ValueError('x and y must have same length')
