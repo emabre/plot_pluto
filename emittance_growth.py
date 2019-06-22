@@ -74,6 +74,9 @@ elif paper_emulate == 'Pompili2017':
     sigma_y_new_meas = np.loadtxt('/home/ema/Dottorato/dati_sperimentali_e_calcoli/Tabulazione_esperimAPL/ArticoloPompili2017/extracted_data/spot_y.dat')
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-8-I90-3.2cmL-1mmD'
     sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho4.5e-7-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho4e-6-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8/'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.5e-6-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8/'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho6e-6-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8/'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-6-I90-3.2cmL-1mmD'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/200mbarOKselfmade-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'

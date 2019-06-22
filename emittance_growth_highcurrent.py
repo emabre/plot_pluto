@@ -83,20 +83,25 @@ r_c = len(sim)*[None]; times = len(sim)*[None];
 g_real = len(sim)*[None]; Dg_real = len(sim)*[None];
 sigma_x_new = len(sim)*[None]; emitt_Nx_new = len(sim)*[None]
 emitt_x_new = len(sim)*[None]; x_new = len(sim)*[None]; xp_new = len(sim)*[None]
+y_new = len(sim)*[None]; yp_new = len(sim)*[None]
 for ss in range(len(sim)):
     times[ss], r_c[ss], g_real[ss], Dg_real[ss] = apl.g_Dg_time_evol(sim[ss], pluto_nframes, r_cap[ss], l_cap)
     times[ss] = times[ss]*time_unit_pluto
 
-    # sigma_x_new.append([[]]*len(pluto_nframes))
-    # emitt_x_new.append([[]]*len(pluto_nframes))
-    # x_new.append([[]]*len(pluto_nframes))
-    # xp_new.append([[]]*len(pluto_nframes))
     # Map over time
+    # (sigma_x_new[ss],
+    #  emitt_x_new[ss],
+    #  x_new[ss],
+    #  xp_new[ss]) = zip(*(map(lambda v: apl.focus_in_thin_apl(v, r_c[ss], x, xp, y, l_cap, gamma, Dz),
+    #                          g_real[ss].T)))
     (sigma_x_new[ss],
      emitt_x_new[ss],
      x_new[ss],
-     xp_new[ss]) = zip(*(map(lambda v: apl.focus_in_thin_apl(v, r_c[ss], x, xp, y, l_cap, gamma, Dz),
+     xp_new[ss],
+     y_new[ss],
+     yp_new[ss]) = zip(*(map(lambda v: apl.focus_in_thick_apl(v, r_c[ss], x, xp, y, yp, l_cap, gamma, Dz, Nz = 10),
                              g_real[ss].T)))
+
     emitt_Nx_new[ss] = np.array(emitt_x_new[ss])*gamma
     sigma_x_new[ss] = np.array(sigma_x_new[ss])
 

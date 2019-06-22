@@ -202,16 +202,88 @@ def focus_in_thin_apl(g, r_c, x, xp, y, l_cap, gamma, Dz):
     xp_new = xp + Dxp
 
     # New emittance after lens
-    emitt_x_new = np.zeros(len(xp_new))
     emitt_x_new = emittance(x, xp_new)[0]
 
     # New spot after drift Dz following lens
-    sigma_x_new = np.zeros(len(xp_new))
-    x_new = np.zeros(len(K))
     x_new = x + Dz*(xp_new)
     sigma_x_new = np.std(x_new)
 
     return sigma_x_new, emitt_x_new, x_new, xp_new
+
+def focus_in_thick_apl(g, r_c, x, xp, y, yp, l_cap, gamma, Dz, Nz = 100):
+    '''
+    Focus a beam passing through an APL as thick lens.
+    g: mag field gradient (B/R, Tesla/m) (1D array like)
+    r_c: radial points where g is defined (m) (1D array like)
+    x: transverse beam particle positions (m) (1D array like)
+    xp: angular divergence of beam particles (m) (1D array like)
+    l_cap: capillary length (m)
+    gamma: beam relativistic gamma
+    Dz: drift after lens (m)
+    Returns
+    sigma_x_new,
+    emitt_x_new, (non normalized emittance after lens)
+    x_new,
+    xp_new
+    '''
+    if len(x)!=len(y):
+        raise ValueError('x and y must have same length')
+    if len(r_c)!=len(g):
+        raise ValueError('r_c and g must have same length')
+
+    # Reflect g and r across r=0
+    r_c_refl = np.concatenate((np.flip(-r_c[1:], axis=0), r_c))
+    g_refl = np.concatenate((np.flip(g[1:], axis=0), g))
+
+    # I do a leapfrog
+    z = 0; dz = l_cap/Nz
+    # x_new_out = []; xp_new_out = [];
+    # y_new_out = []; yp_new_out = []
+    x_old = np.copy(x); y_old = np.copy(y)
+    xp_old = np.copy(xp); yp_old = np.copy(yp)
+    ii =0
+    while z<l_cap:
+        ii += 1
+        # print('step {}'.format(ii))
+        # Interpolate field gradient at the new particle positions
+        g_real_interp = np.interp(np.sqrt(x_old**2+y_old**2),
+                                  r_c_refl,
+                                  g_refl)
+        # Define focusing strength experienced by each particle (g_real_interp has been interpolated at particle positions)
+        k = cst.e/(cst.m_e*cst.c*gamma) * g_real_interp
+
+        # Divergence (xp,yp) increse
+        xp_new = xp_old - k*dz*x_old
+        yp_new = yp_old - k*dz*y_old
+
+        # Update positions
+        x_new = x_old + dz*xp_new
+        y_new = y_old + dz*yp_new
+
+        # Backup position and divergences for next iteration
+        x_old = np.copy(x_new)
+        y_old = np.copy(y_new)
+        xp_old = np.copy(xp_new)
+        yp_old = np.copy(yp_new)
+
+        z += dz
+
+    # # Save output data
+    # x_new_out.append(x_new)
+    # xp_new_out.append(xp_new)
+    # y_new_out.append(y_new)
+    # yp_new_out.append(yp_new)
+
+    # New emittance after lens
+    emitt_x_new = emittance(x_new, xp_new)[0]
+
+    # New spot after drift Dz following lens
+    x_new_drift = x_new + Dz*(xp_new)
+    sigma_x_new = np.std(x_new_drift)
+    y_new_drift = y_new + Dz*(yp_new)
+    sigma_y_new = np.std(y_new_drift)
+
+    return sigma_x_new, emitt_x_new, x_new_drift, xp_new, y_new_drift, yp_new
 
 def drift_beam(x, xp, z_distances):
     '''
