@@ -15,7 +15,7 @@ importlib.reload(prf)
 importlib.reload(ut)
 importlib.reload(apl)
 
-plt.close('all')
+# plt.close('all')
 
 # electron rest energy in MeV
 me_MeV = 0.511
@@ -28,6 +28,7 @@ paper_emulate = 'Pompili2017beam-500A-720A'
 # ---
 
 pluto_nframes = list(range(0,100,1))  # list(range(0,100,5))
+frame_track_drift = 40 # Frame of pluto_nframes at which track particles in drift
 time_unit_pluto = 1e-9  # unit time in pluto's simulation (in s)
 
 # ----- Beam -----
@@ -51,9 +52,13 @@ if paper_emulate == 'Pompili2017beam-500A-720A':
     sim = ['/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I500flattop-1.2cmL-1mmD-NEWGRID',
            '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I720flattop-1.2cmL-1.2mmD-NEWGRID']
     names = ['(a)', '(b)']
-    Dz = 20e-2  # meters
+    Dz = 0.1e-2  # meters
+    drift_points = np.linspace(0.,20e-2, 100)
 else :
     raise ValueError('Wrong choice for paper to emulate')
+
+if frame_track_drift not in pluto_nframes:
+    raise ValueError('Choose a frame_track_drift that is in pluto_nframes')
 
 #%% Computations
 # Number of particles in beam
@@ -74,7 +79,6 @@ print('{} of {} beam particles are ouside capillary, I remove them.'.format(np.s
 # y = np.delete(y, idx_part_outside_cap)
 
 #%% Particles pass in real APL
-
 r_c = len(sim)*[None]; times = len(sim)*[None];
 g_real = len(sim)*[None]; Dg_real = len(sim)*[None];
 sigma_x_new = len(sim)*[None]; emitt_Nx_new = len(sim)*[None]
@@ -96,18 +100,19 @@ for ss in range(len(sim)):
     emitt_Nx_new[ss] = np.array(emitt_x_new[ss])*gamma
     sigma_x_new[ss] = np.array(sigma_x_new[ss])
 
-# da sistemare qui, non sono sicuro che in questo ciclo sopra sia tutto ok (forse problema con emitt_Nx_new o con times)
+# Propagate beam through drift after APL
+# x_drift, sigma_x_drift = map(apl.drift_beam(x_new, xp_new, drift_points)
+x_drift = len(sim)*[None]; sigma_x_drift= len(sim)*[None]
+tt = np.argwhere(frame_track_drift==np.array(pluto_nframes))[0,0]
+for ss in range(len(sim)):
+    x_drift[ss], sigma_x_drift[ss] = apl.drift_beam(x_new[ss][tt], xp_new[ss][tt], drift_points)
+
+
 # Get current set in simulation
 t = [[] for ss in range(len(sim))]
 I = [[] for ss in range(len(sim))]
 for ss in range(len(sim)):
     t[ss], I[ss] = ut.get_currtab(sim[ss])
-
-#%% Plots
-# Trace space
-# fig, ax = plt.subplots(nrows=2)
-# ax[0].scatter(x,xp)
-# ax[1].scatter(x_new,xp_new)
 
 #%% Plot for thesis
 # -------------------------------------------------------------------------
@@ -131,20 +136,12 @@ for ss in range(len(sim)):
                          # label = names[ss]+', current',
                          zorder=0)[0])
 
-# emitt_base = ax_em_th.axhline(y=emitt_Nx*1e6, linestyle='--', lw=2,
-#                                color='k',
-#                                ls = ':',
-#                                # label='no plasma, $\epsilon_N$',
-#                                zorder=12)
-# ax_em_th.legend()
-
-
 ax_I_th.set_ylim(bottom=0., top=800.)
 ax_I_th.set_zorder(ax_em_th.get_zorder()-1)
 ax_em_th.patch.set_visible(False)
 
 ax_em_th.set_ylabel('Emittance (mm mrad)')
-ax_em_th.set_ylim(bottom=0., top=5.5)
+ax_em_th.set_ylim(bottom=0., top=5.)
 ax_em_th.set_xlim([0.,500])
 
 # ax_em_th.legend(curr + emitt_sim + [emitt_base],
@@ -160,6 +157,28 @@ ax_em_th.set_xlabel('Time (ns)')
 ax_I_th.set_ylabel('Current (A)')
 
 plt.tight_layout()
+
+# -------------------------------------------------------------------------
+# -------------------------------------------------------------------------
+# -------------------------------------------------------------------------
+# Spot as function of z, fixed timing
+fig_spz_th, ax_spz_th = plt.subplots(figsize=(4.5,3.))
+# Plot spot
+for ss in range(len(sim)):
+    spot_sim, = ax_spz_th.plot(drift_points*1e2, sigma_x_drift[ss]*1e6,
+                               # color='purple',
+                               lw=2,
+                               # label='$\epsilon_N$ simulated',
+                               zorder=10,
+                               label=names[ss])
+
+ax_spz_th.set_ylabel('Spot rms (μm)')
+ax_spz_th.set_xlim([0.,30.])
+ax_spz_th.legend()
+ax_em_th.set_xlabel('z (cm)')
+
+fig_spz_th.tight_layout()
+
 
 # -------------------------------------------------------------------------
 # -------------------------------------------------------------------------

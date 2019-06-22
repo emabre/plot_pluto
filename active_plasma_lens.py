@@ -212,3 +212,12 @@ def focus_in_thin_apl(g, r_c, x, xp, y, l_cap, gamma, Dz):
     sigma_x_new = np.std(x_new)
 
     return sigma_x_new, emitt_x_new, x_new, xp_new
+
+def drift_beam(x, xp, z_distances):
+    '''
+    Propagate a beam through a drift, and compute sigma and positions ad certain points,
+    defined by the elements inside 1-D, array like Dz
+    '''
+    x_new = tuple(map(lambda dz: x+dz*xp, z_distances))
+    sigma_x_new = np.array(tuple(map(np.std, x_new)))
+    return x_new, sigma_x_new
