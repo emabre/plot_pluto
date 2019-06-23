@@ -26,7 +26,7 @@ paper_emulate = 'Pompili2017'
 # #sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-1.2cm'
 # ---
 
-pluto_nframes = list(range(0,241,5))  # list(range(0,301,10))
+pluto_nframes = list(range(0,181,5))  # list(range(0,301,10))
 time_unit_pluto = 1e-9  # unit time in pluto's simulation (in s)
 
 # ----- Beam -----
@@ -79,10 +79,12 @@ elif paper_emulate == 'Pompili2017':
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho6e-6-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8/'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-6-I90-3.2cmL-1mmD'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/200mbarOKselfmade-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/300mbarOK-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
+    # sim = '/home/ema/simulazioni/sims_pluto/perTesi/100mbarOK-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I90-3.2cmL-1mmD'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-6-I90-3.2cmL-1mmD'
-    Dz = 20e-2  # meters
+    Dz = 19e-2  # meters
 else :
     raise ValueError('Wrong choice for paper to emulate')
 
@@ -97,35 +99,29 @@ x, xp = apl.generate_beam_transverse(sigma_x, d_sigma_x, emitt_x, Npart)
 # Build y distribution ---
 emitt_y = emitt_Ny/gamma
 y, yp = apl.generate_beam_transverse(sigma_y, d_sigma_y, emitt_y, Npart)
+
 # Clean particles outside capillary
-idx_part_outside_cap = (x**2+y**2 > r_cap**2)
+idx_part_outside_cap = np.argwhere(x**2+y**2 > r_cap**2)
 print('{} of {} beam particles are ouside capillary, I remove them.'.format(np.sum(idx_part_outside_cap),
                                                                             Npart))
-# x = np.delete(x, idx_part_outside_cap)
-# y = np.delete(y, idx_part_outside_cap)
-
-#%% Particles pass in APL, Test case, ideal (no aberration, uniform k)
-I = 70.  # Ampere
-k_test = cst.mu_0/(2*np.pi) * (cst.e/(cst.m_e*cst.c)) * I/(gamma*r_cap**2)
-K_test = k_test*l_cap
-
-# Particles direction change (thin lens approx)
-Dxp_test = - K_test*x
-
-xp_new_test = xp+Dxp_test
-
-emitt_x_new_test, sigma_x_new_test, sigma_xp_new_test, cov_xxp_new_test = apl.emittance(x, xp)
-emitt_Nx_test = gamma*emitt_x
-emitt_Nx_new_test = gamma*emitt_x_new_test
+x, xp, y, yp = tuple(map(lambda v: np.delete(v, idx_part_outside_cap),
+                         (x, xp, y, yp)))
 
 #%% Particles pass in real APL
 times, r_c, g_real, Dg_real = apl.g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap)
 times = times*time_unit_pluto
 
-sigma_x_new = [[]]*len(pluto_nframes); emitt_x_new = [[]]*len(pluto_nframes)
-x_new = [[]]*len(pluto_nframes); xp_new = [[]]*len(pluto_nframes)
+sigma_x_new = [None]*len(pluto_nframes); emitt_x_new = [None]*len(pluto_nframes)
+x_new = [None]*len(pluto_nframes); xp_new = [None]*len(pluto_nframes)
+y_new = [None]*len(pluto_nframes); yp_new = [None]*len(pluto_nframes)
 for tt in range(len(pluto_nframes)):
-    sigma_x_new[tt], emitt_x_new[tt], x_new[tt], xp_new[tt] = apl.focus_in_thin_apl(g_real[:,tt], r_c, x, xp, y, l_cap, gamma, Dz)
+    (sigma_x_new[tt],
+     emitt_x_new[tt],
+     x_new[tt],
+     xp_new[tt],
+     y_new[tt],
+     yp_new[tt]) = apl.focus_in_thick_apl(g_real[:,tt], r_c, x, xp, y, yp, l_cap, gamma, Dz)
+
 emitt_Nx_new = np.array(emitt_x_new)*gamma
 sigma_x_new = np.array(sigma_x_new)
 
@@ -149,7 +145,7 @@ emitt_Nx_new_meas = convert_emitt_meas(emitt_Nx_new_meas, dt)
 emitt_Ny_new_meas = convert_emitt_meas(emitt_Ny_new_meas, dt)
 
 # Fix spot measurement to fit with the present ordering and conventions
-def convert_emitt_meas(spot_new_meas, dt):
+def convert_spot_meas(spot_new_meas, dt):
     ''' Fix eamittance measurement to fit with the present ordering and conventions'''
     idx_ord_spot = np.argsort(spot_new_meas[:,0])
     spot_new_meas = spot_new_meas[idx_ord_spot,:]
@@ -158,8 +154,8 @@ def convert_emitt_meas(spot_new_meas, dt):
     spot_new_meas[:,0] += dt
     spot_new_meas[:,1] = spot_new_meas[:,1]*1e-6
     return spot_new_meas
-sigma_x_new_meas = convert_emitt_meas(sigma_x_new_meas, dt)
-sigma_y_new_meas = convert_emitt_meas(sigma_y_new_meas, dt)
+sigma_x_new_meas = convert_spot_meas(sigma_x_new_meas, dt)
+sigma_y_new_meas = convert_spot_meas(sigma_y_new_meas, dt)
 
 #I_apl = np.interp(times, t, I)
 
