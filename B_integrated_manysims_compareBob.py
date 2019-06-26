@@ -16,7 +16,7 @@ importlib.reload(prf)
 sims = ['/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I500flattop-1.2cmL-1mmD',
        '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I720flattop-1.2cmL-1.2mmD'
        ]
-pluto_nframes = [20]  # 10
+pluto_nframes = [30]  # 10
 # Capillary length, half of the real one, including electrodes
 l_cap = 0.6e-2  # m
 r_cap = (0.5e-3, 0.6e-3)  # m
@@ -24,6 +24,8 @@ dz_cap = 0.1e-2  # m
 # Static B as in Bobrova model
 B_staticBob = np.loadtxt('/home/ema/myprogr/scarica_a_regime/B_adimensional.dat')
 plot_staticBob = True
+
+names = ('(a)', '(b)')
 
 # <codecell> Load the data
 B = []
@@ -83,7 +85,7 @@ for ss in range(len(sims)):
         r_cc[ss][ii] = np.concatenate(([0.], r_cc[ss][ii]), axis=0)
 
 # Plot equilibrium model field
-scale_factors = [1.08, 1.08]
+scale_factors = [1.09, 1.09]
 if plot_staticBob:
     color_Bob = 'darkorange'
     linestyle_Bob = '-'
@@ -127,7 +129,7 @@ import matplotlib.lines as mlines
 handles=[]
 for ss in range(len(sims)):
     handles.append(mlines.Line2D([], [], color='k', linestyle=linestyles[ss],  # , marker='*', markersize=15,
-                   label='R={:.0f}μm'.format(r_cap[ss]*1e6)))
+                   label=names[ss]))
 if plot_staticBob:
     handles.append(mlines.Line2D([], [], color=color_Bob, linestyle=linestyle_Bob,  # , marker='*', markersize=15,
                    label='Equil. model'))
@@ -143,7 +145,7 @@ for cc in range(len(r_cap)):
 ax_avg.set_xlim([0., max(r_cap)*1e6])
 ax_avg.set_ylim([0., 300.])
 ax_avg.set_ylabel('Magnetic field (longitud. avg.) (mT)')
-ax_avg.set_xlabel('Radius (μm)')
+ax_avg.set_xlabel('r (μm)')
 ax_avg.grid()
 fig_avg.tight_layout()
 plt.show()

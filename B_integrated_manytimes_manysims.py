@@ -15,11 +15,12 @@ importlib.reload(prf)
 sims = ['/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I500flattop-1.2cmL-1mmD',
        '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I720flattop-1.2cmL-1.2mmD'
        ]
-pluto_nframes = [24]  # 10
+pluto_nframes = [10,20]  # 10
 # Capillary length, half of the real one, including electrodes
 l_cap = 0.6e-2  # m
 r_cap = (0.5e-3, 0.6e-3)  # m
 dz_cap = 0.1e-2  # m
+names = ('(a)','(b)')
 
 # <codecell> Load the data
 B = []
@@ -78,7 +79,7 @@ for ss in range(len(sims)):
         B_avg_z[ss][ii] = np.concatenate(([0.], B_avg_z[ss][ii]), axis=0)
         r_cc[ss][ii] = np.concatenate(([0.], r_cc[ss][ii]), axis=0)
 
-linestyles = ['-','--']
+linestyles = ['-',':']
 colors = [['red', 'darkred'], ['royalblue','navy']]
 
 for ss in range(len(sims)):
@@ -87,21 +88,25 @@ for ss in range(len(sims)):
                     B_avg_z[ss][ii][r_cc[ss][ii]<=r_cap[ss]]*1e3,
                     linestyle = linestyles[ss],
                     color=colors[ii][ss],
-                    # label='t={:.0f}ns, R={:.0f}μm'.format(times[ss][ii], r_cap[ss]*1e6),
+                    label= names[ss] +',{:.0f}ns'.format(times[ss][ii]),
                     )
+ax_avg.legend(framealpha=0.4, handlelength=0.6)
 
-import matplotlib.lines as mlines
-handles=[]
-for ss in range(len(sims)):
-    handles.append(mlines.Line2D([], [], color='k', linestyle=linestyles[ss],  # , marker='*', markersize=15,
-                   label='R={:.0f}μm'.format(r_cap[ss]*1e6)))
+# import matplotlib.lines as mlines
+# handles=[]
+# for ss in range(len(sims)):
+#     handles.append(mlines.Line2D([], [], color='k', linestyle=linestyles[ss],  # , marker='*', markersize=15,
+#                    # label='R={:.0f}μm'.format(r_cap[ss]*1e6)),
+#                    label=names[ss]),
+#                    )
+#
+# ax_avg.legend(handles=handles)
 
-ax_avg.legend(handles=handles)
+# text_x_positions = [0.4, 0.6]
+# for ii in range(len(pluto_nframes)):
+#     fig_avg.text(text_x_positions[ii], 0.9, "t={:.0f}ns".format(times[0][ii]), ha="center", va="bottom", size="medium",color=colors[ii][1])
+# fig_avg.text(0.48, 0.9, ';', ha="center", va="bottom", size="medium")
 
-text_x_positions = [0.4, 0.6]
-for ii in range(len(pluto_nframes)):
-    fig_avg.text(text_x_positions[ii], 0.9, "t={:.0f}ns".format(times[0][ii]), ha="center", va="bottom", size="medium",color=colors[ii][1])
-fig_avg.text(0.48, 0.9, ';', ha="center", va="bottom", size="medium")
 for cc in range(len(r_cap)):
     ax_avg.axvline(x=r_cap[cc]*1e6, color='k', linestyle='-', lw=1.)
 # ax_avg.set_title('t={}'.format())
@@ -122,7 +127,7 @@ for cc in range(len(r_cap)):
 ax_avg.set_xlim([0., max(r_cap)*1e6])
 ax_avg.set_ylim([0., 300.])
 ax_avg.set_ylabel('Magnetic field (longitud. avg.) (mT)')
-ax_avg.set_xlabel('Radius (μm)')
+ax_avg.set_xlabel('r (μm)')
 ax_avg.grid()
 fig_avg.tight_layout()
 plt.show()

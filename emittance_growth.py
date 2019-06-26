@@ -26,7 +26,7 @@ paper_emulate = 'Pompili2017'
 # #sim = '/home/ema/simulazioni/sims_pluto/dens_real/1.3e5Pa-1.2cm'
 # ---
 
-pluto_nframes = list(range(0,181,5))  # list(range(0,301,10))
+pluto_nframes = list(range(0,241,5))  # list(range(0,301,10))
 time_unit_pluto = 1e-9  # unit time in pluto's simulation (in s)
 
 # ----- Beam -----
@@ -60,7 +60,8 @@ elif paper_emulate == 'Pompili2017':
     sigma_x = 130.e-6
     sigma_y = sigma_x
     # d_sigma_x = 0
-    d_sigma_x = -(130.-110.)/20.*1.e-4  # Circa... (vedi Fig 6b. sigma(z=9cm)=200um, sigma(z=11cm)=150um -> sigma'=Dsigma/Dz=25*10^-4)
+    d_sigma_x = -(130.-112.)/20.*1.e-4  # Circa... (vedi Fig 6b. sigma(z=9cm)=200um, sigma(z=11cm)=150um -> sigma'=Dsigma/Dz=25*10^-4)
+    # d_sigma_x = (128-130)*1e-6/(15e-3)  # Circa.. per tenere in conto passive focusing
     d_sigma_y = d_sigma_x
     l_cap = 3.2e-2  # m
     r_cap = 0.5e-3  # m
@@ -84,7 +85,7 @@ elif paper_emulate == 'Pompili2017':
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I90-3.2cmL-1mmD'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-6-I90-3.2cmL-1mmD'
-    Dz = 19e-2  # meters
+    Dz = 18.5e-2  # meters
 else :
     raise ValueError('Wrong choice for paper to emulate')
 
@@ -121,12 +122,30 @@ for tt in range(len(pluto_nframes)):
      xp_new[tt],
      y_new[tt],
      yp_new[tt]) = apl.focus_in_thick_apl(g_real[:,tt], r_c, x, xp, y, yp, l_cap, gamma, Dz)
-
 emitt_Nx_new = np.array(emitt_x_new)*gamma
 sigma_x_new = np.array(sigma_x_new)
 
 # Get current set in simulation
 t, I = ut.get_currtab(sim)
+
+#%% Particles pass in ideal APL
+I_at_times = np.interp(times, t, I)
+
+g_ideal = np.tensordot((cst.mu_0*I_at_times)/(2*np.pi*r_cap), 1/r_c[1:], axes=0).T
+# g_ideal = (cst.mu_0*I)/(2*np.pi*r_cap)/r_c
+# times, r_c, g_ideal = (r_cap, l_cap)
+
+sigma_x_new_ideal = [None]*len(pluto_nframes); emitt_x_new_ideal = [None]*len(pluto_nframes)
+x_new_ideal = [None]*len(pluto_nframes); xp_new_ideal = [None]*len(pluto_nframes)
+y_new_ideal = [None]*len(pluto_nframes); yp_new_ideal = [None]*len(pluto_nframes)
+for tt in range(len(pluto_nframes)):
+    (sigma_x_new_ideal[tt],
+     emitt_x_new_ideal[tt],
+     x_new_ideal[tt],
+     xp_new_ideal[tt],
+     y_new_ideal[tt],
+     yp_new_ideal[tt]) = apl.focus_in_thick_apl(g_ideal[:,tt], r_c[1:], x, xp, y, yp, l_cap, gamma, Dz)
+sigma_x_new_ideal = np.array(sigma_x_new_ideal)
 
 # Fix emittance measurement to fit with the present ordering and conventions
 # Get dt to shift data (my data is time shifted w.r.t. the articles (they put t=0 at max I))
@@ -273,6 +292,9 @@ spot_sim, = ax_sp_th.plot(times*1e9, sigma_x_new*1e6,
                           lw=2,
                           # label='$\epsilon_N$ simulated',
                           zorder=10)
+spot_ideal, = ax_sp_th.plot(times*1e9, sigma_x_new_ideal*1e6,
+                            color='purple',
+                            linestyle='--')
 spot_x_meas, = ax_sp_th.plot(sigma_x_new_meas[:,0]*1e9,
                             sigma_x_new_meas[:,1]*1e6,
                             color='b', linestyle='--', marker='o',
@@ -292,15 +314,17 @@ ax_sp_th.patch.set_visible(False)
 
 ax_sp_th.set_ylabel('Spot rms (μm)')
 ax_sp_th.set_xlim([0.,1200])
+ax_sp_th.set_ylim([0.,350])
 
 # ax_sp_th.legend(loc=1)
-ax_sp_th.legend([curr, spot_x_meas, spot_y_meas, spot_sim],
+ax_sp_th.legend([curr, spot_x_meas, spot_y_meas, spot_sim, spot_ideal],
                 ['Current',
                  '$\sigma_{x}$ measured',
                  '$\sigma_{y}$ measured',
-                 '$\sigma$ simulated'])
+                 '$\sigma$ simulated',
+                 '$\sigma$ unif. current'])
 
-ax_em_th.set_xlabel('Time (ns)')
+ax_sp_th.set_xlabel('Time (ns)')
 ax_I_th_sp.set_ylabel('Current (A)')
 
 plt.tight_layout()

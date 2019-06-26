@@ -29,7 +29,8 @@ importlib.reload(apl)
 # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I550-3.2cmL-1mmD-r60-NTOT32-diffRecPeriod8'
 # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I550flattop-3.2cmL-1mmD-r60-NTOT20-NB20-diffRecPeriod10'
 # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I550regrow4-3.2cmL-1mmD-r60-NTOT20-NB30-diffRecPeriod10'
-sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I550-3.2cmL-1mmD-r60-NTOT32-diffRecPeriod8'
+# sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I550-3.2cmL-1mmD-r60-NTOT32-diffRecPeriod8'
+sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho4.5e-7-I90-3.2cmL-1mmD-r60-NTOT16-diffRecPeriod8'
 # ---
 
 # The frames of pluto which I want to see (it must be a list of integers, with
@@ -39,7 +40,7 @@ sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I550-3.2cmL-1mmD-r60-
 # pluto_nframes = [-10+20*ii for ii in range(1,15)]
 # pluto_nframes = [24, 50, 74, 100, 120, 150]
 # pluto_nframes = [24, 50, 74, 100, 120, 132, 150]
-pluto_nframes = list(range(0,266,5))
+pluto_nframes = list(range(0,241,5))
 
 legend = os.path.basename(sim)
 if legend=='':  # This is in case the sim path ends with '/'
@@ -54,7 +55,7 @@ z_lines_end = 0.5
 # Capillary radius
 r_cap = 0.5e-3
 # Capillary length, half of the real one
-l_cap = 1.5e-2
+l_cap = 3.0e-2
 
 show_legend = False
 
@@ -82,7 +83,7 @@ ax_g = plt.subplot(gs[1,0])
 # ax_leg = plt.subplot(gs[1,1])
 
 tt, rr = np.meshgrid(times, r_c)
-lev = np.linspace(-1.e-10,250.,11)
+lev = np.linspace(-1.e-10,120.,9)
 mp = ax_Dg.contourf(tt, rr*1e6, Dg, lev, cmap='hot')
 
 #for ii in range(len(r_c)):
@@ -92,40 +93,28 @@ ax_g.set_xlabel('Time (ns)')
 ax_Dg.set_ylabel('$r$ (μm)')
 # ax.set_ylim([0.,r_cap*1e+2])
 fig.colorbar(mp, cax=ax_Dg_color,
-             label=r'$\langle g(0) \rangle - \langle g(r) \rangle$ (T/m)',
+             label=r'$\langle g\rangle_z (0)  - \langle g \rangle_z (r)$ (T/m)',
              )
 
 g0_line, = ax_g.plot(times, g[0,:], '-',
                      # label=r'$\langle g \rangle (0)$',
                      )
-gR_line, = ax_g.plot(times, g[-1,:], '-', label=r'$\langle g \rangle (R)$')  # QUESTO NON E' ANCHE PROP. ALLA CORRENTE, PERCHE' USO UN CAMPO INTEGRATO E DIVISO PER L
-ax_g.set_ylabel(r'$\langle g \rangle$'+' (T/m)' + ', Current (A) ')
-
-# ax_I = ax_g.twinx()
+gR_line, = ax_g.plot(times, g[-1,:], '-')  # QUESTO NON E' ANCHE PROP. ALLA CORRENTE, PERCHE' USO UN CAMPO INTEGRATO E DIVISO PER L
 I_line, = ax_g.plot(t_I*1e9, I, '--', color='k',
                     # label='current',
                     )
-# ax_I.set_ylabel('Current (A)')
-# ax_I.set_ylim(0., 250.)
-# ax_I.set_ylim(0., 2*np.pi*r_cap**2/mu_0*ax_g.get_ylim()[1])
-# ax_I.set_ylim(2*np.pi*r_cap**2/mu_0*np.array(ax_g.get_ylim()))
-# fig.legend(loc=(0.6,0.31))
 ax_g.legend([g0_line, gR_line, I_line],
-              [r'$\langle g(0) \rangle $',
-               r'$\langle g(0) - g(R) \rangle$',
+              [r'$\langle g \rangle (0)$',
+               r'$\langle g \rangle (R)$',
                'current'],
                framealpha = 0.4,
             # loc=(0.75,0.31),
             )
-# ax_leg.patch.set_visible(False)
-
-# ax_Dg.set_title(legend)
-# plt.figtext(0.2,0.97, legend)
-
+ax_g.set_ylabel(r'$\langle g \rangle_z$'+' (T/m)' + ', Current (A) ')
 # Set lims to have common lims
+ax_g.set_ylim([0,200])
 ax_g.grid()
 ax_g.set_xlim(ax_Dg.get_xlim())
-# ax_g.set_ylim([0,800])  # bottom=0
 
 fig.tight_layout()
 

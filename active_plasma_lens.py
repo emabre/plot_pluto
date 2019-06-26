@@ -73,20 +73,16 @@ def g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap):
         z_sims.append(z)
         B.append(q["bx3"]/1e4)  # I convert B to Tesla
 
-        # Build capillary shape (False where there is wall, True elsewere)
-        # u_cap = cap_shape(r, z, r_cap, l_cap)
-        cap.append(q['interBound'] == 0e0)
-
         # Averaging of B over z (I cannot use trapz, since I have cell-averaged B)
-    #    B_integ_z = np.sum(((B[ii]*cap[ii].astype(int)).T*np.diff(z)).T,
-    #                                       axis=0)
-        B_integ_z = np.sum(((B[ii]*cap[ii]).T*np.diff(z)).T,
-                                           axis=0)
+        # Beware: also the bcs on B (i.e. the first cells near the capillar wall that are in the internal boundary)
+        # are useful for computing, because if I want to compute B at the cell edges, I need them
+        B_integ_z = np.sum((B[ii].T*np.diff(z)).T, axis=0)
+
         B_avg_z.append(2*B_integ_z/l_cap)
 
     # Build the focusing strenght g(r)=B/r (vertex centered)
     times = np.array(times)
-    # Vertex centered integral of B
+    # Vertex centered averaged B
     B_avg_z_v = []
     for ii in range(len(B_avg_z)):
         B_avg_z_v.append(np.concatenate((np.array([0]),
