@@ -57,12 +57,13 @@ z_cc = 0.5*(z[1:]+z[:-1])
 
 #%% Plotting
 gs = gridspec.GridSpec(6, 3,
-                       width_ratios=[25, 2, 2],
-                       height_ratios=6*[1],
-                       hspace = 0
+                       width_ratios = [25, 2, 2],
+                       height_ratios = 6*[1],
+                       hspace = 0,
+                       wspace = 0.8
                        )
 
-fig = plt.figure(figsize=(5.5,4.5))
+fig = plt.figure(figsize=(4,2.4))
 ax = [[],[]]; ax_cb = [[],[],[]]
 ax[0] = plt.subplot(gs[:3,0])
 ax[1] = plt.subplot(gs[3:,0])
@@ -73,10 +74,10 @@ ax_cb[2] = plt.subplot(gs[:2,2])
 
 mp_rho = ax[0].contourf(z_cc*1e2, r_cc*1e6,
                         rho.T,
-                         # levels = np.linspace(Tmin,Tmax,101),
+                         # levels = np.linspace(Tmin, Tmax, 101),
                          # levels = 100,
-                         # levels=np.linspace(Tmin, Tmax, 150),
-                         # locator=ticker.LogLocator(),
+                         # levels = np.linspace(Tmin, Tmax, 150),
+                         # locator = ticker.LogLocator(),
                          # norm = colors.LogNorm(vmin=vmin, vmax=vmax),
                          # vmin = Tmin,
                          # vmax = Tmin,
