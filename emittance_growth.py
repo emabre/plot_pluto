@@ -109,7 +109,8 @@ x, xp, y, yp = tuple(map(lambda v: np.delete(v, idx_part_outside_cap),
                          (x, xp, y, yp)))
 
 #%% Particles pass in real APL
-times, r_c, g_real, Dg_real = apl.g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap)
+# times, r_c, g_real, Dg_real = apl.g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap, ret_full_g=False)
+times, r_c, g_real, Dg_real, g_full, z_g_v, r_g_v = apl.g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap, ret_full_g=True)
 times = times*time_unit_pluto
 
 sigma_x_new = [None]*len(pluto_nframes); emitt_x_new = [None]*len(pluto_nframes)
@@ -121,7 +122,7 @@ for tt in range(len(pluto_nframes)):
      x_new[tt],
      xp_new[tt],
      y_new[tt],
-     yp_new[tt]) = apl.focus_in_thick_apl(g_real[:,tt], r_c, x, xp, y, yp, l_cap, gamma, Dz)
+     yp_new[tt]) = apl.focus_in_thick_apl_new(g_full[tt], r_g_v, z_g_v, x, xp, y, yp, l_cap, gamma, Dz)
 emitt_Nx_new = np.array(emitt_x_new)*gamma
 sigma_x_new = np.array(sigma_x_new)
 
