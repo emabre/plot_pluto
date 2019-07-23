@@ -24,8 +24,8 @@ setting_case = 'compare-1mmD-1.2mmD'
 
 # ----
 if setting_case == 'compare-1mmD-1.2mmD':
-    sim = ['/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I500flattop-1.2cmL-1mmD/',
-           '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I720flattop-1.2cmL-1.2mmD'
+    sim = ['/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I500flattop-1.2cmL-1mmD-NEWGRID/',
+           '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I720flattop-1.2cmL-1.2mmD-NEWGRID'
            ]
     pluto_nframe = 10  # 10
     # Capillary length, half of the real one (including electrodes)
