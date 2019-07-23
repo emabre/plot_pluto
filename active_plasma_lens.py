@@ -42,7 +42,7 @@ def generate_beam_transverse(sigma_x, d_sigma_x, emitt_x, Npart, check_distro=Tr
 #
 #    # Generate particle distribution
 
-def g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap):
+def g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap, ret_full_g=False):
     '''
     Compute <B>/r and variation of <B>/r with respect to d<B>/dr(r=0).
     Input:
@@ -84,16 +84,23 @@ def g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap):
     times = np.array(times)
     # Vertex centered averaged B
     B_avg_z_v = []
-    for ii in range(len(B_avg_z)):
+    B_v = []
+    for ii in range(len(pluto_nframes)):
         B_avg_z_v.append(np.concatenate((np.array([0]),
                                          0.5*(B_avg_z[ii][1:] + B_avg_z[ii][:-1]),
                                          np.array([np.nan]))))
+        B_v.append(np.concatenate((np.zeros((B[ii].shape[0]-1,1)),
+                                   0.25*(B[ii][1:,1:]+B[ii][1:,:-1]+B[ii][-1:,1:]+B[ii][-1:,-1])),
+                                  axis = 1))
+    z_B_v = z[1:-1]
+    r_B_v = r[:-1]
 
     # I radially restrict the B field to the capillary
     B_avg_z_v_c = np.transpose(np.array([list(B_avg_z_v[ii][r<=r_cap]) for ii in range(len(B_avg_z_v))]))
+    # B_v = np.transpose(np.array([list(B_v[ii][r<=r_cap]) for ii in range(len(B_v))]))
     r_c = r[r<=r_cap]
 
-    # Build g (it is not really g, just B/R)
+    # Build the longitudinal average of g (it is not really g, just B/R)
     g = np.zeros(B_avg_z_v_c.shape)
     for ii in range(B_avg_z_v_c.shape[1]):
         g[1:,ii] = B_avg_z_v_c[1:,ii]/r_c[1:]
@@ -103,7 +110,19 @@ def g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap):
     for ii in range(g.shape[1]):
         Dg[:,ii] = g[0,ii] - g[:,ii]
 
-    return times, r_c, g, Dg
+    # Build g as 2D matrix (to represent a function of (r,z))
+    g_full = []
+    for ii in range(len(pluto_nframes)):
+        g_temp = B_v[ii][:,1:]/r_B_v[1:]
+        g_full.append(np.concatenate((g_temp[:,[0]],
+                                      g_temp),
+                                      axis=1))
+
+
+    if ret_full_g:
+        return times, r_c, g, Dg, B_v, g_full, z_B_v, r_B_v
+    else:
+        return times, r_c, g, Dg
 
 def ne_avg_over_r(sim, pluto_nframes, average_ne, z_lines=None, ret_z_cell_borders=False):
     '''
@@ -205,6 +224,89 @@ def focus_in_thin_apl(g, r_c, x, xp, y, l_cap, gamma, Dz):
     sigma_x_new = np.std(x_new)
 
     return sigma_x_new, emitt_x_new, x_new, xp_new
+
+def focus_in_thick_apl_new(g, r_c, x, xp, y, yp, l_cap, gamma, Dz, Nz = 100):
+    '''
+    Focus a beam passing through an APL as thick lens. The beam is assumed to have zero thickness in z direction (longitudinal),
+    this has no effect on the tracking since the space charge and the wakefields are neglected (and we are not interested in the
+    beam properties inside the lens but only outside).
+    g: mag field gradient (B/R, Tesla/m) (1D array like)
+    r_c: radial points where g is defined (m) (1D array like)
+    x: transverse beam particle positions (m) (1D array like)
+    xp: angular divergence of beam particles (m) (1D array like)
+    l_cap: capillary length (m)
+    gamma: beam relativistic gamma
+    Dz: drift after lens (m)
+    Returns
+    sigma_x_new,
+    emitt_x_new, (non normalized emittance after lens)
+    x_new,
+    xp_new
+    '''
+    if len(x)!=len(y):
+        raise ValueError('x and y must have same length')
+    if len(r_c)!=len(g):
+        raise ValueError('r_c and g must have same length')
+
+    from scipy.interpolate import griddata
+
+    # Reflect g and r across r=0
+    r_c_refl = np.concatenate((np.flip(-r_c[1:], axis=0), r_c))
+    no
+    g_refl = np.concatenate((np.flip(g[1:,:], axis=0), g))
+
+    # I do a leapfrog
+    z = 0; dz = l_cap/Nz
+    # x_new_out = []; xp_new_out = [];
+    # y_new_out = []; yp_new_out = []
+    x_old = np.copy(x); y_old = np.copy(y)
+    xp_old = np.copy(xp); yp_old = np.copy(yp)
+    ii =0
+    while z<l_cap:
+        ii += 1
+        # print('step {}'.format(ii))
+        # Interpolate field gradient at the new particle positions
+        # g_real_interp = np.interp(np.sqrt(x_old**2+y_old**2),
+        #                           r_c_refl,
+        #                           g_refl)
+        # rz_beam = qualcosa da: np.sqrt(x_old**2+y_old**2), z
+        g_real_interp = griddata(rz_c_refl, g_refl, rz_beam, method='linear')
+
+        # Define focusing strength experienced by each particle (g_real_interp has been interpolated at particle positions)
+        k = cst.e/(cst.m_e*cst.c*gamma) * g_real_interp
+
+        # Divergence (xp,yp) increse
+        xp_new = xp_old - k*dz*x_old
+        yp_new = yp_old - k*dz*y_old
+
+        # Update positions
+        x_new = x_old + dz*xp_new
+        y_new = y_old + dz*yp_new
+
+        # Backup position and divergences for next iteration
+        x_old = np.copy(x_new)
+        y_old = np.copy(y_new)
+        xp_old = np.copy(xp_new)
+        yp_old = np.copy(yp_new)
+
+        z += dz
+
+    # # Save output data
+    # x_new_out.append(x_new)
+    # xp_new_out.append(xp_new)
+    # y_new_out.append(y_new)
+    # yp_new_out.append(yp_new)
+
+    # New emittance after lens
+    emitt_x_new = emittance(x_new, xp_new)[0]
+
+    # New spot after drift Dz following lens
+    x_new_drift = x_new + Dz*(xp_new)
+    sigma_x_new = np.std(x_new_drift)
+    y_new_drift = y_new + Dz*(yp_new)
+    sigma_y_new = np.std(y_new_drift)
+
+    return sigma_x_new, emitt_x_new, x_new_drift, xp_new, y_new_drift, yp_new
 
 def focus_in_thick_apl(g, r_c, x, xp, y, yp, l_cap, gamma, Dz, Nz = 100):
     '''
