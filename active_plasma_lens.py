@@ -114,14 +114,13 @@ def g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap, ret_full_g=False):
     g_full = []
     for ii in range(len(pluto_nframes)):
         g_temp = B_v[ii][:,1:]/r_B_v[1:]
-        g_temp = np.concatenate((g_temp[:,[0]], g_temp), axis=1)
-        g_temp = np.concatenate((np.flip(g_temp[1:,:], axis=1), g_temp), axis=0)
-        g_full.append(g_temp)
-    z_B_v = np.concatenate((np.flip(-z_B_v[1:], axis=0), z_B_v))
+        g_full.append(np.concatenate((g_temp[:,[0]],
+                                      g_temp),
+                                      axis=1))
 
-    # import ipdb; ipdb.set_trace()
+
     if ret_full_g:
-        return times, r_c, g, Dg, g_full, z_B_v, r_B_v
+        return times, r_c, g, Dg, B_v, g_full, z_B_v, r_B_v
     else:
         return times, r_c, g, Dg
 
@@ -226,7 +225,7 @@ def focus_in_thin_apl(g, r_c, x, xp, y, l_cap, gamma, Dz):
 
     return sigma_x_new, emitt_x_new, x_new, xp_new
 
-def focus_in_thick_apl_new(g, r_c, z_c, x, xp, y, yp, gamma, Dz, Nz = 100):
+def focus_in_thick_apl_new(g, r_c, x, xp, y, yp, l_cap, gamma, Dz, Nz = 100):
     '''
     Focus a beam passing through an APL as thick lens. The beam is assumed to have zero thickness in z direction (longitudinal),
     this has no effect on the tracking since the space charge and the wakefields are neglected (and we are not interested in the
@@ -235,6 +234,7 @@ def focus_in_thick_apl_new(g, r_c, z_c, x, xp, y, yp, gamma, Dz, Nz = 100):
     r_c: radial points where g is defined (m) (1D array like)
     x: transverse beam particle positions (m) (1D array like)
     xp: angular divergence of beam particles (m) (1D array like)
+    l_cap: capillary length (m)
     gamma: beam relativistic gamma
     Dz: drift after lens (m)
     Returns
@@ -245,56 +245,58 @@ def focus_in_thick_apl_new(g, r_c, z_c, x, xp, y, yp, gamma, Dz, Nz = 100):
     '''
     if len(x)!=len(y):
         raise ValueError('x and y must have same length')
-    if g.shape != (len(z_c), len(r_c)):
-        raise ValueError('shapes of r_c, z_c and g_full mismatch')
+    if len(r_c)!=len(g):
+        raise ValueError('r_c and g must have same length')
 
     from scipy.interpolate import griddata
-    from scipy.interpolate import interp2d
-    from scipy.interpolate import RegularGridInterpolator
 
-    # rr_c, zz_c = np.meshgrid(r_c, z_c)
-    # zr_c = np.stack((zz_c.flatten(), rr_c.flatten()), axis=1)
-    # g_flat = g.flatten()
-    # import ipdb; ipdb.set_trace()
-    # g_interp = interp2d(r_c, z_c, g, kind='linear')
-
-    g_interp = RegularGridInterpolator((z_c,r_c), g, method='linear')
-    # import ipdb; ipdb.set_trace()
+    # Reflect g and r across r=0
+    r_c_refl = np.concatenate((np.flip(-r_c[1:], axis=0), r_c))
+    no
+    g_refl = np.concatenate((np.flip(g[1:,:], axis=0), g))
 
     # I do a leapfrog
-    z = z_c.min()
-    dz = (z_c.max()-z_c.min())/Nz
+    z = 0; dz = l_cap/Nz
+    # x_new_out = []; xp_new_out = [];
+    # y_new_out = []; yp_new_out = []
+    x_old = np.copy(x); y_old = np.copy(y)
+    xp_old = np.copy(xp); yp_old = np.copy(yp)
     ii =0
-    x_new = np.copy(x); y_new = np.copy(y)
-    xp_new = np.copy(xp); yp_new = np.copy(yp)
-    while z<z_c.max():
+    while z<l_cap:
         ii += 1
-        print('step {}'.format(ii))
+        # print('step {}'.format(ii))
         # Interpolate field gradient at the new particle positions
         # g_real_interp = np.interp(np.sqrt(x_old**2+y_old**2),
         #                           r_c_refl,
         #                           g_refl)
         # rz_beam = qualcosa da: np.sqrt(x_old**2+y_old**2), z
-        # zr_beam = np.stack((0.3*np.ones(len(x_new)), np.sqrt(x_new**2+y_new**2)), axis=1)
-        # g_real_interp = griddata(zr_c, g_flat, zr_beam, method='linear')
-        # g_real_interp = g_interp(np.sqrt(x_new**2+y_new**2), z*np.ones(len(x_new)))
-        g_real_interp = g_interp(np.stack((z*np.ones(len(x_new)), np.sqrt(x_new**2+y_new**2)), axis=1))
+        g_real_interp = griddata(rz_c_refl, g_refl, rz_beam, method='linear')
 
         # Define focusing strength experienced by each particle (g_real_interp has been interpolated at particle positions)
         k = cst.e/(cst.m_e*cst.c*gamma) * g_real_interp
 
         # Divergence (xp,yp) increse
-        xp_new -= k*dz*x_new
-        yp_new -= k*dz*y_new
+        xp_new = xp_old - k*dz*x_old
+        yp_new = yp_old - k*dz*y_old
 
         # Update positions
-        x_new += dz*xp_new
-        y_new += dz*yp_new
+        x_new = x_old + dz*xp_new
+        y_new = y_old + dz*yp_new
+
+        # Backup position and divergences for next iteration
+        x_old = np.copy(x_new)
+        y_old = np.copy(y_new)
+        xp_old = np.copy(xp_new)
+        yp_old = np.copy(yp_new)
+
         z += dz
 
-    print('finished a tracking')
-    # import ipdb; ipdb.set_trace()
     # # Save output data
+    # x_new_out.append(x_new)
+    # xp_new_out.append(xp_new)
+    # y_new_out.append(y_new)
+    # yp_new_out.append(yp_new)
+
     # New emittance after lens
     emitt_x_new = emittance(x_new, xp_new)[0]
 
