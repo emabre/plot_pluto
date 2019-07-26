@@ -119,7 +119,7 @@ def g_Dg_time_evol(sim, pluto_nframes, r_cap, l_cap, ret_full_g=False):
         g_full.append(g_temp)
     z_B_v = np.concatenate((np.flip(-z_B_v[1:], axis=0), z_B_v))
 
-
+    # import ipdb; ipdb.set_trace()
     if ret_full_g:
         return times, r_c, g, Dg, g_full, z_B_v, r_B_v
     else:
@@ -226,7 +226,7 @@ def focus_in_thin_apl(g, r_c, x, xp, y, l_cap, gamma, Dz):
 
     return sigma_x_new, emitt_x_new, x_new, xp_new
 
-def focus_in_thick_apl_new(g, r_c, z_c, x, xp, y, yp, l_cap, gamma, Dz, Nz = 100):
+def focus_in_thick_apl_new(g, r_c, z_c, x, xp, y, yp, gamma, Dz, Nz = 100):
     '''
     Focus a beam passing through an APL as thick lens. The beam is assumed to have zero thickness in z direction (longitudinal),
     this has no effect on the tracking since the space charge and the wakefields are neglected (and we are not interested in the
@@ -235,7 +235,6 @@ def focus_in_thick_apl_new(g, r_c, z_c, x, xp, y, yp, l_cap, gamma, Dz, Nz = 100
     r_c: radial points where g is defined (m) (1D array like)
     x: transverse beam particle positions (m) (1D array like)
     xp: angular divergence of beam particles (m) (1D array like)
-    l_cap: capillary length (m)
     gamma: beam relativistic gamma
     Dz: drift after lens (m)
     Returns
@@ -260,13 +259,15 @@ def focus_in_thick_apl_new(g, r_c, z_c, x, xp, y, yp, l_cap, gamma, Dz, Nz = 100
     # g_interp = interp2d(r_c, z_c, g, kind='linear')
 
     g_interp = RegularGridInterpolator((z_c,r_c), g, method='linear')
+    # import ipdb; ipdb.set_trace()
 
     # I do a leapfrog
-    z = -0.75*l_cap; dz = l_cap/Nz
+    z = z_c.min()
+    dz = (z_c.max()-z_c.min())/Nz
     ii =0
     x_new = np.copy(x); y_new = np.copy(y)
     xp_new = np.copy(xp); yp_new = np.copy(yp)
-    while z<0.75*l_cap:
+    while z<z_c.max():
         ii += 1
         print('step {}'.format(ii))
         # Interpolate field gradient at the new particle positions
@@ -274,11 +275,10 @@ def focus_in_thick_apl_new(g, r_c, z_c, x, xp, y, yp, l_cap, gamma, Dz, Nz = 100
         #                           r_c_refl,
         #                           g_refl)
         # rz_beam = qualcosa da: np.sqrt(x_old**2+y_old**2), z
-        zr_beam = np.stack((0.3*np.ones(len(x_new)), np.sqrt(x_new**2+y_new**2)), axis=1)
+        # zr_beam = np.stack((0.3*np.ones(len(x_new)), np.sqrt(x_new**2+y_new**2)), axis=1)
         # g_real_interp = griddata(zr_c, g_flat, zr_beam, method='linear')
         # g_real_interp = g_interp(np.sqrt(x_new**2+y_new**2), z*np.ones(len(x_new)))
         g_real_interp = g_interp(np.stack((z*np.ones(len(x_new)), np.sqrt(x_new**2+y_new**2)), axis=1))
-
 
         # Define focusing strength experienced by each particle (g_real_interp has been interpolated at particle positions)
         k = cst.e/(cst.m_e*cst.c*gamma) * g_real_interp
@@ -295,11 +295,6 @@ def focus_in_thick_apl_new(g, r_c, z_c, x, xp, y, yp, l_cap, gamma, Dz, Nz = 100
     print('finished a tracking')
     # import ipdb; ipdb.set_trace()
     # # Save output data
-    # x_new_out.append(x_new)
-    # xp_new_out.append(xp_new)
-    # y_new_out.append(y_new)
-    # yp_new_out.append(yp_new)
-
     # New emittance after lens
     emitt_x_new = emittance(x_new, xp_new)[0]
 

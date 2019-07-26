@@ -85,7 +85,7 @@ elif paper_emulate == 'Pompili2017':
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho2.53e-7-I90-3.2cmL-1mmD-r60-NTOT8'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-7-I90-3.2cmL-1mmD'
     # sim = '/home/ema/simulazioni/sims_pluto/perTesi/rho8e-6-I90-3.2cmL-1mmD'
-    Dz = 18.5e-2  # meters
+    Dz = 20e-2  # meters
 else :
     raise ValueError('Wrong choice for paper to emulate')
 
@@ -116,13 +116,14 @@ times = times*time_unit_pluto
 sigma_x_new = [None]*len(pluto_nframes); emitt_x_new = [None]*len(pluto_nframes)
 x_new = [None]*len(pluto_nframes); xp_new = [None]*len(pluto_nframes)
 y_new = [None]*len(pluto_nframes); yp_new = [None]*len(pluto_nframes)
+Dz_actual = Dz-0.5*(z_g_v.max()-z_g_v.min())  # Remove the length of drift that is already condained in capillary
 for tt in range(len(pluto_nframes)):
     (sigma_x_new[tt],
      emitt_x_new[tt],
      x_new[tt],
      xp_new[tt],
      y_new[tt],
-     yp_new[tt]) = apl.focus_in_thick_apl_new(g_full[tt], r_g_v, z_g_v, x, xp, y, yp, l_cap, gamma, Dz)
+     yp_new[tt]) = apl.focus_in_thick_apl_new(g_full[tt], r_g_v, z_g_v, x, xp, y, yp, gamma, Dz_actual)
 emitt_Nx_new = np.array(emitt_x_new)*gamma
 sigma_x_new = np.array(sigma_x_new)
 
